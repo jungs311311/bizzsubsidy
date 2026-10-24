@@ -177,7 +177,7 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
           <option value="">전체 (지역 구분 없이)</option>
           <option>서울</option><option>부산</option><option>대구</option><option>인천</option><option>광주</option><option>대전</option><option>울산</option><option>세종</option><option>경기</option><option>강원</option><option>충북</option><option>충남</option><option>전북</option><option>전남</option><option>경북</option><option>경남</option><option>제주</option>
         </select>
-        <div class="hint">고르면 새 공고에서 전국 공고와 그 지역 공고만 보여줘요.</div>
+        <div class="hint">세액감면 감면율(수도권 여부)과 새 공고 지역 거르기에 쓰여요.</div>
       </div>
       <div class="field">
         <span class="lbl">해당하는 상황</span>
@@ -413,10 +413,64 @@ const IR={ // 1단계 업종
  ei:u=>u.ei?["no","부동산 임대업은 자영업자 고용보험 가입 제한 업종"]:u.farm?["chk","고용보험 적용 제외 사업인지"]:["ok","가입 제한 업종 아님"],
  duru:u=>u.farm?["chk","법인 아닌 농림어업 사업장은 근로자 4인 미만이면 고용보험 적용 제외"]:["ok","업종 제한 없음"],
  yellow:u=>u.vice?["chk","유흥·사행 관련 업종은 가입 제한일 수 있음"]:["ok","가입 제한 업종 아님"],
- tax:u=>["chk",`${u.n}이(가) 조세특례제한법 감면 업종인지와 감면율 (세무대리인에게 확인)`],
+ tax:(u,s)=>{const x=taxOf(s.d.k,u);
+  if(x.t==="no")return ["no","조세특례제한법이 정한 감면 업종(48개)이 아니에요"];
+  if(x.t==="partial")return ["chk",x.why];
+  if(x.t==="clinic")return ["chk","의원·치과·한의원은 요양급여 수입이 80% 이상이고 종합소득금액이 1억원 이하일 때만 감면돼요"];
+  return ["ok",`감면 업종 (${x.lab})`]},
  kosmes:u=>u.x?["chk","중진공 공고의 융자 제외 업종에 들어 있는지"]:["ok","제외 업종 아님 (공고별 확인)"],
  none:()=>["ok","업종 제한 없음"]
 };
+// 중소기업 특별세액감면(조세특례제한법 제7조) 업종 판정. retail=도소매·의료업, know=지식기반, other=그 밖의 감면 업종
+function taxOf(k,u){
+  const c=u.c||"",part=why=>({t:"partial",why});
+  switch(k){
+    case "retail":return {t:"retail",lab:"도매 및 소매업"};
+    case "food":return /^551/.test(c)?part("관광숙박업(호텔 등)으로 등록된 곳만 감면 업종이에요"):{t:"no"};
+    case "svc":case "estate":case "fin":return {t:"no"};
+    case "health":
+      if(/^8620[123]$/.test(c))return {t:"clinic"};
+      if(c==="861")return {t:"retail",lab:"의료업"};
+      if(c==="87")return {t:"other",lab:"사회복지 서비스업"};
+      if(c==="86902")return part("의료법상 의료기관이 아니면 감면 업종이 아니에요");
+      return part("의료법상 의료기관 운영이면 감면 업종이에요");
+    case "edu":return c?{t:"no"}:part("직업기술 관련 학원·훈련시설만 감면 업종이에요");
+    case "pro":
+      if(/^7(1|3100|3904)/.test(c))return {t:"no"};
+      if(c==="713")return {t:"know",lab:"광고업"};
+      if(c==="732")return {t:"know",lab:"전문디자인업"};
+      return part("연구개발·엔지니어링·과학기술 서비스 등은 감면 업종이에요");
+    case "art":
+      if(c==="90")return {t:"other",lab:"창작 및 예술 관련 서비스업 (자영예술가 제외)"};
+      return /그 밖/.test(u.n)?part("도서관·사적지 등 일부 여가 서비스만 감면 업종이에요"):{t:"no"};
+    case "it":
+      if(/^63/.test(c))return part("정보서비스업은 감면 업종이지만 가상자산·아이템 중개가 포함되는지 확인이 필요해요");
+      if(!c)return part("출판·방송·전기통신·프로그래밍·정보서비스는 감면 업종이에요");
+      return {t:"know",lab:"출판업 (소프트웨어 개발·공급 포함)"};
+    case "mfg":return {t:"other",lab:"제조업"};
+    case "build":return {t:"other",lab:"건설업"};
+    case "trans":return c==="52991"?{t:"other",lab:"통관 대리 및 관련 서비스업"}:{t:"other",lab:"여객운송업·물류산업"};
+    case "farm":return {t:"other",lab:"작물재배·축산·어업·임업"};
+    case "biz":
+      if(c==="741")return {t:"other",lab:"건물 및 산업설비 청소업"};
+      if(c==="751")return {t:"other",lab:"인력공급 및 고용알선업"};
+      return c?{t:"no"}:part("콜센터·경비·시장조사 등 일부만 감면 업종이에요");
+  }
+  return part("감면 업종 목록 확인이 필요해요");
+}
+const METRO=["서울","인천","경기"];
+function taxRate(s,t,metro){ // 감면율(%)
+  const cash=t==="retail"||t==="clinic"; // 도소매·의료업
+  if(s.small)return cash?10:(metro?20:30);
+  if(cash)return metro?0:5;
+  if(t==="know")return metro?10:15;
+  return metro?0:15;
+}
+function taxRates(s){ // [감면율] 또는 지역을 모르면 [수도권, 그 외]
+  const x=taxOf(s.d.k,s.u);
+  if(!["retail","clinic","know","other"].includes(x.t))return null;
+  return s.region?[taxRate(s,x.t,METRO.includes(s.region))]:[taxRate(s,x.t,true),taxRate(s,x.t,false)];
+}
 const GRADE=s=>s.ss?"소상공인":s.small?"소기업":s.sme?"중기업":"중견 이상";
 const SR={ // 2단계 규모
  ss:s=>s.ss?["ok","소상공인"]:["no",`소상공인만 대상 (현재 ${GRADE(s)})`],
@@ -507,8 +561,14 @@ const P=[
  {name:"노란우산공제",org:"중소기업중앙회",cat:"줄이는 돈",amt:"소득공제 + 폐업 시 목돈",ind:"yellow",size:"small",
   about:"소기업·소상공인 대표가 가입하는 퇴직금 성격의 공제. 납입액 소득공제, 압류 금지. 지자체에 따라 신규 가입 시 희망장려금도 지원해요.",
   url:"https://www.8899.or.kr"},
- {name:"중소기업 특별세액감면",org:"국세청",cat:"줄이는 돈",amt:"소득세·법인세 5~30% 감면",ind:"tax",size:"sme",
-  about:"업종·지역(수도권 여부)·규모에 따라 감면율이 달라요. 종합소득세 신고 때 세무대리인과 적용 여부를 확인하세요.",
+ {name:"중소기업 특별세액감면",org:"국세청",cat:"줄이는 돈",ind:"tax",size:"sme",
+  amt:s=>{const r=s.sme&&taxRates(s);if(!r||!Math.max(...r))return "소득세·법인세 5~30% 감면";
+    const lo=Math.min(...r),hi=Math.max(...r);
+    return `소득세·법인세 ${lo===hi?`${lo}%`:lo===0?`최대 ${hi}%`:`${lo}~${hi}%`} 감면 · 연 최대 1억원`},
+  cond:s=>{const r=taxRates(s);if(!r)return OK;
+    if(r.length===2&&r[0]!==r[1])return ["chk",`사업장 지역을 고르면 감면율이 정해져요 (수도권 ${r[0]}% · 그 외 ${r[1]}%)`];
+    return r[0]===0?["no",`수도권(서울·인천·경기) 중기업은 이 업종 감면이 없어요`]:["ok",`감면율 ${r[0]}%`]},
+  about:"종합소득세(법인은 법인세) 신고 때 감면 신청서를 함께 내면 돼요. 감면 한도는 연 1억원이고, 전년보다 직원이 줄면 1명당 500만원씩 한도가 줄어요. 창업중소기업 감면 등 다른 세액감면과는 같이 받을 수 없어요.",
   url:"https://www.hometax.go.kr"},
  {name:"중소기업 정책자금",org:"중소벤처기업진흥공단",cat:"빌리는 돈",amt:"운전·시설자금, 기업별 한도",ind:"kosmes",size:"sme",
   cond:s=>s.ss?["chk","소상공인은 소진공 자금이 먼저예요. 업력·성장성 등 중진공 융자 요건"]:["ok","중소기업"],
@@ -545,7 +605,7 @@ function read(){
   const u=SUB[d.k][+$("sub").value]||SUB[d.k][0];
   const yrs=+$("yrs").value;
   const ex=u.x?EXM[u.x]:(u.six&&yrs<1?EXM.estate:null);
-  return {d,u,rev,emp,sme,small,ss,yrs,ex,pre:yrs===-1,
+  return {d,u,rev,emp,sme,small,ss,yrs,ex,pre:yrs===-1,region:$("region").value,
     hire:$("hire").checked,youth:$("youth").checked,credit:$("credit").checked,eij:$("eij").checked,close:$("close").checked,grow:$("grow").checked,
     drop:$("drop").checked,hiloan:$("hiloan").checked,disaster:$("disaster").checked,woman:$("woman").checked,disabled:$("disabled").checked};
 }
@@ -579,17 +639,18 @@ function render(){
   const grp=g=>J.filter(x=>x.g===g);
   const yes=grp("yes"),chk=grp("check"),sit=grp("sit"),no=grp("no");
   const MK={ok:"✓",chk:"?",no:"✕",na:"–"};
+  const AMT=p=>typeof p.amt==="function"?p.amt(s):p.amt;
   const badge=([lab,[st,why]])=>`<span class="sb ${st}" title="${why||""}">${lab} ${MK[st]}</span>`;
   const card=x=>`
     <article class="card ${x.g}">
       <div class="card-top"><h3>${x.p.name}</h3><span class="cat">${x.p.cat}</span></div>
-      <div class="meta">${x.p.org} · <span class="amt">${x.p.amt}</span></div>
+      <div class="meta">${x.p.org} · <span class="amt">${AMT(x.p)}</span></div>
       <div class="steps">${x.steps.map(badge).join("")}</div>
       ${x.need?`<p class="need"><b>확인할 것</b>${x.need.join(" · ")}</p>`:""}
       <p class="why">${x.p.about}</p>
       <a href="${x.p.url}" target="_blank" rel="noopener">${x.p.url.replace(/^https:\/\//,"")} →</a>
     </article>`;
-  const row=(x,tag)=>`<div class="row"><div class="rname"><b>${x.p.name}</b><span class="meta">${x.p.amt}</span></div><div class="rwhy">${tag}<span>${x.why}</span></div></div>`;
+  const row=(x,tag)=>`<div class="row"><div class="rname"><b>${x.p.name}</b><span class="meta">${AMT(x.p)}</span></div><div class="rwhy">${tag}<span>${x.why}</span></div></div>`;
   $("jTotal").textContent=`전체 ${P.length}개`;
   $("jSum").innerHTML=`<span class="pill yes">받을 수 있어요 ${yes.length}</span><span class="pill check">확인하면 가능 ${chk.length}</span><span class="pill sit">상황에 맞으면 가능 ${sit.length}</span><span class="pill no">받을 수 없어요 ${no.length}</span>`;
   $("hYes").hidden=!yes.length;$("gYes").innerHTML=yes.map(card).join("");
