@@ -92,11 +92,6 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
 .empty{color:var(--muted);font-size:14px;padding:12px 0}
 .alert{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5}
 .alert b{color:var(--warn)}
-.exsec{display:grid;gap:8px}
-.exsec h2{font-family:var(--f-display);font-size:18px;margin:6px 0 0}
-.exitem{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;border:1px dashed var(--line);border-radius:8px;font-size:14px;color:var(--muted)}
-.exitem s{color:var(--off)}
-.exitem span{font-size:13px;color:var(--warn);font-weight:500}
 .need{margin:0;font-size:13.5px;line-height:1.5;color:var(--ink);background:var(--warn-soft);border-radius:6px;padding:7px 10px}
 .need b{color:var(--warn);margin-right:6px}
 details.exlist{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
@@ -109,20 +104,25 @@ details.exlist p{font-size:13px;color:var(--muted);margin:8px 0}
 .tbl td:first-child{font-family:var(--f-num);font-size:12.5px;white-space:nowrap}
 .tbl tr.hl td{background:var(--warn-soft)}
 .tbl td.ok{color:var(--accent);font-size:12.5px}
-.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px;min-width:0}
-.panel .lbl,.panel .hint{margin:0}
-.subname{font-family:var(--f-display);font-size:20px;line-height:1.35;margin:0;text-wrap:balance}
-.subname small{font-family:var(--f-num);font-size:13px;color:var(--muted);font-weight:500;margin-left:6px}
-.mxwrap{overflow-x:auto}
-.mxt{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
-.mxt th,.mxt td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-.mxt th{font-size:12px;color:var(--muted);font-weight:600}
-.mxt td:first-child{font-weight:600;width:34%}
-.mxt td:last-child{color:var(--muted);font-size:13px}
-.st{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:2px 10px;white-space:nowrap}
-.st.ok{background:var(--accent-soft);color:var(--accent)}
-.st.no{background:var(--warn);color:var(--paper)}
-.st.chk{border:1px solid var(--warn);color:var(--warn)}
+.judge{display:grid;gap:12px;min-width:0}
+.sumbar{display:flex;flex-wrap:wrap;gap:6px}
+.pill.sit{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.pill.no{background:var(--bg);color:var(--off);border:1px solid var(--line)}
+.gh{font-size:14px;font-weight:600;color:var(--muted);margin:8px 0 0;letter-spacing:.02em}
+.steps{display:flex;flex-wrap:wrap;gap:6px}
+.sb{font-size:12px;font-weight:600;border-radius:999px;padding:1px 9px;white-space:nowrap;border:1px solid transparent;cursor:default}
+.sb.ok{background:var(--accent-soft);color:var(--accent)}
+.sb.chk{border-color:var(--warn);color:var(--warn)}
+.sb.no{background:var(--warn);color:var(--paper)}
+.sb.na{background:var(--bg);color:var(--off);border-color:var(--line)}
+details.grp{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+details.grp summary{cursor:pointer;font-weight:600;font-size:15px}
+details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight:500;margin-left:4px}
+.rows{display:grid;margin-top:8px}
+.row{display:grid;gap:3px;padding:10px 0;border-top:1px solid var(--line);font-size:14px;min-width:0}
+.row:first-child{border-top:0}
+.rname{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.rwhy{color:var(--muted);font-size:13.5px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .notes{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;display:grid;gap:6px}
 .notes a{color:var(--accent)}
 @media (prefers-reduced-motion:no-preference){.card{animation:in .25s ease both}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
@@ -206,23 +206,18 @@ details.exlist p{font-size:13px;color:var(--muted);margin:8px 0}
         <div class="alert" id="exAlert" hidden></div>
       </div>
 
-      <div class="panel">
-        <p class="lbl">업종 기준 지원 제외 여부</p>
-        <h2 class="subname" id="mxTitle"></h2>
-        <div class="mxwrap"><table class="mxt">
-          <thead><tr><th>지원</th><th>업종 판정</th><th>기준</th></tr></thead>
-          <tbody id="mx"></tbody>
-        </table></div>
-        <p class="hint">업종만 본 결과예요. '업종 통과'여도 매출·직원 수 같은 다른 조건 때문에 아래 목록에서 '확인 필요'로 나오거나 '받을 수 없는 지원'으로 빠질 수 있어요. '공고마다 다름'은 그 지원의 공고문이 제외 업종을 따로 정해서, 공고문을 봐야 알 수 있다는 뜻이에요.</p>
-      </div>
-
-      <div class="tally"><h2>받을 수 있는 지원</h2><span class="pill yes" id="nYes"></span><span class="pill check" id="nChk"></span></div>
-      <div class="list" id="list"></div>
-
-      <div class="exsec" id="exSec" hidden>
-        <h2>받을 수 없는 지원</h2>
-        <div id="exList" class="list"></div>
-      </div>
+      <section class="judge">
+        <div class="tally"><h2>지원 판정</h2><span class="hint" id="jTotal"></span></div>
+        <div class="sumbar" id="jSum"></div>
+        <p class="hint" style="margin:0">지원마다 <b>업종 → 규모 → 조건</b> 순서로 따져요. ✓ 통과 · ? 확인 필요 · ✕ 안 됨. 표시에 마우스를 올리면 이유가 나와요.</p>
+        <h3 class="gh" id="hYes">받을 수 있어요</h3>
+        <div class="list" id="gYes"></div>
+        <h3 class="gh" id="hChk">확인하면 받을 수 있어요</h3>
+        <div class="list" id="gChk"></div>
+        <p class="empty" id="gNone" hidden>지금 조건으로 바로 받을 수 있는 지원은 없어요. 아래 묶음에서 이유를 확인하세요.</p>
+        <details class="grp" id="dSit"><summary>상황에 맞으면 받을 수 있어요 <span id="nSit"></span></summary><div class="rows" id="gSit"></div></details>
+        <details class="grp" id="dNo"><summary>받을 수 없어요 <span id="nNo"></span></summary><div class="rows" id="gNo"></div></details>
+      </section>
 
       <section class="notices" aria-live="polite">
         <div class="tally"><h2>기업마당 새 공고</h2><span class="pill check" id="nCount"></span></div>
@@ -407,27 +402,31 @@ const SUB={
   {c:"",n:"그 밖의 사업지원·임대 서비스업"}]
 };
 
-// 업종만 따진 지원별 판정: [상태, 기준]. 상태 ok=업종 OK, no=제외, chk=공고 확인
-function pfRule(u,s){
-  if(u.x){const e=EXM[u.x];return ["no",`정책자금 제외 업종 [${e.c}] ${e.n}${e.ok?`. 예외: ${e.ok}`:""}`]}
-  if(u.six)return s.yrs>=1?["ok","부동산업이지만 6개월 이상 영업 중이면 예외로 신청 가능"]:["chk","부동산업 중 예외 업종이지만, 영업 6개월 미만이면 제외"];
-  if(u.ok)return ["ok",u.ok];
-  return ["ok","정책자금 제외 업종 아님"];
-}
-const MX=[
- {n:"소상공인 경영안정 바우처",f:(u,s)=>{const r=pfRule(u,s);return r[0]==="no"?["no","바우처는 정책자금 제외 업종을 그대로 적용. "+r[1]]:r}},
- {n:"소진공 정책자금 (일반경영안정·청년고용연계·신용취약·재도전특별·대환대출·긴급경영안정)",f:pfRule},
- {n:"희망리턴패키지",f:u=>u.x?["chk","공고별 제외 업종. 유흥·도박 등 일부 업종 제외로 안내되며 정책자금 목록과 다를 수 있음"]:["ok","유흥·도박 등 제외 업종 아님"]},
- {n:"AI 활용 지원 · 강한소상공인 성장지원",f:u=>u.x?["chk","공고별 제외 업종. 정책자금 제외 업종을 그대로 쓰는 경우가 많음"]:["ok","제외 업종 아님 (공고별 확인)"]},
- {n:"자영업자 고용보험료 지원",f:u=>u.ei?["no","부동산 임대업은 자영업자 고용보험 가입 제한 업종"]:u.farm?["chk","고용보험법상 적용 제외 사업일 수 있음"]:["ok","고용보험 가입 제한 업종 아님"]},
- {n:"두루누리 사회보험료 지원",f:u=>u.farm?["chk","법인이 아닌 농업·임업·어업 사업장은 근로자 4인 미만이면 고용보험 적용 제외"]:["ok","업종 제한 없음 (근로자 10인 미만 사업장)"]},
- {n:"노란우산공제",f:u=>u.vice?["chk","유흥·사행 관련 업종은 가입 제한 업종일 수 있음"]:["ok","가입 제한 업종 아님"]},
- {n:"중소기업 특별세액감면",f:()=>["chk","조세특례제한법이 정한 감면 업종 목록이 따로 있어 세무대리인 확인 필요"]},
- {n:"중진공 중소기업 정책자금",f:u=>u.x?["chk","중진공 융자 제외 업종이 따로 있음. 유흥·사행·부동산·금융 등은 대부분 제외"]:["ok","제외 업종 아님 (공고별 확인)"]}
-];
-// 제외 업종이면: hard=신청 불가 확정, soft=비슷한 기준을 쓰는 경우가 많아 공고 확인
-const HARD=new Set(["소상공인 경영안정 바우처","일반경영안정자금","청년고용연계자금","신용취약소상공인자금","재도전특별자금","소상공인 대환대출","긴급경영안정자금 (일시적 경영애로)"]);
-const SOFT=new Set(["예비창업패키지","신사업창업사관학교","희망리턴패키지","희망리턴패키지 경영개선 지원","혁신 소상공인 AI 활용 지원","강한소상공인 성장지원","중소기업 정책자금"]);
+// ---- 판정 규칙: 단계마다 [상태, 이유]. ok=✓ 통과, chk=? 확인 필요, no=✕ 안 됨 ----
+const IR={ // 1단계 업종
+ pf:(u,s)=>{
+  if(u.x){const e=EXM[u.x];return ["no",`정책자금 제외 업종 [${e.c}] ${e.n}`]}
+  if(u.six)return s.yrs>=1||s.pre?["ok","부동산업 중 예외 업종 (6개월 이상 영업)"]:["no","부동산 중개·분양 대행은 영업 6개월 이상이어야 예외로 신청 가능"];
+  return ["ok",u.ok||"정책자금 제외 업종 아님"]},
+ disaster:(u,s)=>u.x&&/특별재난지역/.test(EXM[u.x].ok)?["chk","제외 업종이지만 특별재난지역이면 재해자금은 예외로 가능해요. 특별재난지역인지 확인"]:IR.pf(u,s),
+ soft:u=>u.x?["chk",`공고문의 제외 업종에 ${u.n}이(가) 들어 있는지`]:["ok","제외 업종 아님 (공고별 제외 업종 확인)"],
+ ei:u=>u.ei?["no","부동산 임대업은 자영업자 고용보험 가입 제한 업종"]:u.farm?["chk","고용보험 적용 제외 사업인지"]:["ok","가입 제한 업종 아님"],
+ duru:u=>u.farm?["chk","법인 아닌 농림어업 사업장은 근로자 4인 미만이면 고용보험 적용 제외"]:["ok","업종 제한 없음"],
+ yellow:u=>u.vice?["chk","유흥·사행 관련 업종은 가입 제한일 수 있음"]:["ok","가입 제한 업종 아님"],
+ tax:u=>["chk",`${u.n}이(가) 조세특례제한법 감면 업종인지와 감면율 (세무대리인에게 확인)`],
+ kosmes:u=>u.x?["chk","중진공 공고의 융자 제외 업종에 들어 있는지"]:["ok","제외 업종 아님 (공고별 확인)"],
+ none:()=>["ok","업종 제한 없음"]
+};
+const GRADE=s=>s.ss?"소상공인":s.small?"소기업":s.sme?"중기업":"중견 이상";
+const SR={ // 2단계 규모
+ ss:s=>s.ss?["ok","소상공인"]:["no",`소상공인만 대상 (현재 ${GRADE(s)})`],
+ small:s=>s.small?["ok",GRADE(s)]:["no",`소기업·소상공인만 대상 (현재 ${GRADE(s)})`],
+ sme:s=>s.sme?["ok",GRADE(s)]:["no","중소기업만 대상"],
+ any:()=>["ok","규모 제한 없음"]
+};
+const OK=["ok",""];
+// 체크해야 판정하는 상황
+const SIT={youth:"대표가 만 39세 이하이거나 청년을 고용 중",credit:"신용점수(NICE)가 839점 이하",hiloan:"연 7% 이상 고금리 사업자 대출이 있음",disaster:"화재·수해 등 재해 피해를 입음",drop:"매출이 전년보다 10% 이상 줄었음",woman:"대표가 여성",disabled:"대표가 장애인",close:"폐업·업종 전환·재창업을 고민 중",grow:"온라인 판매, AI 도입, 브랜드 성장에 관심 있음"};
 
 const $=id=>document.getElementById(id);
 IND.forEach((d,i)=>{const o=document.createElement("option");o.value=i;o.textContent=d.n;$("ind").appendChild(o)});
@@ -443,127 +442,102 @@ $("exTbody").innerHTML=EXL.map(e=>`<tr data-id="${e.id}"><td>${e.c}</td><td>${e.
 const won=m=>{m=Math.max(0,Math.round(m||0));const e=Math.floor(m/10000),r=m%10000;
   if(!e)return r.toLocaleString()+"만원";return e.toLocaleString()+"억"+(r?" "+r.toLocaleString()+"만원":"원")};
 
-// 지원사업: test(s) → "yes" | "check" | null
+// 지원사업: ind=업종 규칙, size=규모 규칙, sit=체크해야 하는 상황, cond=그 밖의 조건, pre=예비창업자 전용
 const P=[
- {name:"소상공인 경영안정 바우처",org:"중소벤처기업부",cat:"받는 돈",amt:"사업장당 25만원",
-  test:s=>s.ss&&s.rev<10400?(s.yrs===0?"check":"yes"):null,
-  why:()=>"연매출 1억 400만원 미만 소상공인 대상. 전기·가스요금, 4대보험료, 연료비 등에 쓰는 카드 포인트로 지급. 2026년은 12월 18일까지 신청.",
+ {name:"소상공인 경영안정 바우처",org:"중소벤처기업부",cat:"받는 돈",amt:"사업장당 25만원",ind:"pf",size:"ss",
+  cond:s=>s.rev>=10400?["no",`연매출 1억 400만원 미만만 대상 (입력 ${won(s.rev)})`]:s.yrs===0?["chk","2025년 12월 31일 이전에 개업했는지"]:["ok","연매출 1억 400만원 미만"],
+  about:"전기·가스요금, 4대보험료, 연료비 등에 쓰는 카드 포인트로 지급. 2026년은 12월 18일까지 신청.",
   url:"https://voucher.sbiz24.kr"},
- {name:"자영업자 고용보험료 지원",org:"소상공인시장진흥공단",cat:"줄이는 돈",amt:"보험료 50~80% 환급, 최대 5년",
-  test:s=>s.ss&&s.emp===0?(s.eij?"yes":"check"):null,
-  why:s=>s.eij?"직원 없는 1인 소상공인이 가입한 고용보험료를 돌려받습니다. 폐업 시 실업급여도 받을 수 있어요.":"직원 없는 1인 소상공인이라 대상이 됩니다. 근로복지공단에서 자영업자 고용보험에 먼저 가입한 뒤 신청하세요.",
+ {name:"자영업자 고용보험료 지원",org:"소상공인시장진흥공단",cat:"줄이는 돈",amt:"보험료 50~80% 환급, 최대 5년",ind:"ei",size:"ss",
+  cond:s=>s.emp>0?["no",`직원 없는 1인 사업자만 대상 (직원 ${s.emp}명)`]:s.eij?["ok","자영업자 고용보험 가입"]:["chk","근로복지공단에서 자영업자 고용보험에 먼저 가입"],
+  about:"직원 없는 1인 소상공인이 낸 고용보험료를 돌려받아요. 폐업하면 실업급여도 받을 수 있어요.",
   url:"https://www.sbiz24.kr"},
- {name:"두루누리 사회보험료 지원",org:"고용노동부·근로복지공단",cat:"줄이는 돈",amt:"국민연금·고용보험 80%, 최대 36개월",
-  test:s=>s.emp<10&&(s.hire?"yes":(s.emp>0?"check":null)),
-  why:s=>s.hire?"10인 미만 사업장이 월보수 270만원 미만 신규 근로자를 가입시키면 사업주·근로자 부담분을 모두 지원합니다.":"10인 미만 사업장이라 해당될 수 있어요. 직전 6개월 가입 이력이 없는 신규 근로자(월보수 270만원 미만)에 한해 지원됩니다.",
+ {name:"두루누리 사회보험료 지원",org:"고용노동부·근로복지공단",cat:"줄이는 돈",amt:"국민연금·고용보험 80%, 최대 36개월",ind:"duru",size:"any",
+  cond:s=>s.emp>=10?["no","근로자 10인 미만 사업장만 대상"]:s.hire?["ok","새로 뽑은 직원 있음"]:s.emp===0?["no","고용한 직원이 없음 (직원을 새로 뽑으면 대상)"]:["chk","새로 뽑은 직원이 월보수 270만원 미만이고 최근 6개월 사회보험 가입 이력이 없는지"],
+  about:"10인 미만 사업장이 월보수 270만원 미만 신규 근로자를 가입시키면 사업주·근로자 부담분을 함께 지원해요.",
   url:"https://www.4insure.or.kr"},
- {name:"일반경영안정자금",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"연 최대 7,000만원 · 기준금리+0.6%p",
-  test:s=>s.ss?"yes":null,
-  why:()=>"업력과 관계없이 소상공인이면 신청할 수 있는 대표 정책자금. 5년 상환(2년 거치). 최근 5년간 3회 이상 받았다면 제외. 제로페이·온누리상품권 가맹점, 자영업자 고용보험·노란우산·풍수해보험 가입, 비수도권 소재 사업장은 금리 우대가 있어요.",
+ {name:"일반경영안정자금",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"연 최대 7,000만원 · 기준금리+0.6%p",ind:"pf",size:"ss",
+  about:"업력과 관계없이 소상공인이면 신청할 수 있는 대표 정책자금. 5년 상환(2년 거치). 최근 5년간 3회 이상 받았다면 제외. 제로페이·온누리상품권 가맹점, 자영업자 고용보험·노란우산·풍수해보험 가입, 비수도권 소재 사업장은 금리 우대가 있어요.",
   url:"https://ols.sbiz.or.kr"},
- {name:"청년고용연계자금",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"정책자금 기준금리 적용",
-  test:s=>s.ss&&s.youth?"yes":null,
-  why:()=>"만 39세 이하 청년 대표 또는 청년을 고용한 소상공인 대상. 일반자금보다 금리가 낮습니다.",
+ {name:"청년고용연계자금",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"정책자금 기준금리 적용",ind:"pf",size:"ss",sit:"youth",
+  about:"만 39세 이하 청년 대표 또는 청년을 고용한 소상공인 대상. 일반자금보다 금리가 낮아요.",
   url:"https://ols.sbiz.or.kr"},
- {name:"신용취약소상공인자금",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 3,000만원 · 기준금리+1.6%p",
-  test:s=>s.ss&&s.credit?"yes":null,
-  why:()=>"NICE 839점 이하 중·저신용 소상공인 직접대출. 소상공인 지식배움터 신용관리 교육을 먼저 들어야 합니다. 고금리 대출이 있다면 대환대출(919점 이하)도 함께 확인하세요.",
+ {name:"신용취약소상공인자금",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 3,000만원 · 기준금리+1.6%p",ind:"pf",size:"ss",sit:"credit",
+  cond:()=>["chk","소상공인 지식배움터에서 신용관리 교육 먼저 이수"],
+  about:"NICE 839점 이하 중·저신용 소상공인 직접대출. 고금리 대출이 있다면 대환대출(919점 이하)도 함께 보세요.",
   url:"https://ols.sbiz.or.kr"},
- {name:"소상공인 대환대출",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 5,000만원 · 연 4.5% 고정 · 최대 10년",
-  test:s=>s.ss&&s.hiloan?(s.credit?"yes":"check"):null,
-  why:s=>s.credit?"고금리 사업자 대출을 연 4.5% 고정금리 정책자금으로 갈아타는 대출. NICE 919점 이하 중·저신용 소상공인 대상이라 신용 조건은 충족해요.":"고금리 사업자 대출을 연 4.5% 고정금리로 갈아타는 대출. NICE 919점 이하 중·저신용 소상공인만 대상이니 신용점수를 확인하세요.",
+ {name:"소상공인 대환대출",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 5,000만원 · 연 4.5% 고정 · 최대 10년",ind:"pf",size:"ss",sit:"hiloan",
+  cond:s=>s.credit?["ok","신용점수 919점 이하"]:["chk","NICE 신용점수가 919점 이하인지"],
+  about:"고금리 사업자 대출을 연 4.5% 고정금리 정책자금으로 갈아타는 대출. 중·저신용(NICE 919점 이하) 소상공인 대상.",
   url:"https://ols.sbiz.or.kr"},
- {name:"긴급경영안정자금 (재해 피해)",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 1억원 · 연 2.0% 고정",
-  test:s=>s.ss&&s.disaster?"yes":null,
-  why:s=>s.ex&&/특별재난지역/.test(s.ex.ok)?"정책자금 제외 업종이지만, 사업장이 특별재난지역에 있으면 재해자금은 신청할 수 있어요. 지자체에서 재해확인증을 먼저 발급받으세요.":"화재·수해 등 재해 피해를 입은 소상공인 대상. 지자체(읍·면·동)에서 재해확인증을 먼저 발급받아야 합니다. 5년 상환(2년 거치).",
+ {name:"긴급경영안정자금 (재해 피해)",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 1억원 · 연 2.0% 고정",ind:"disaster",size:"ss",sit:"disaster",
+  about:"화재·수해 등 재해 피해를 입은 소상공인 대상. 지자체(읍·면·동)에서 재해확인증을 먼저 발급받아야 해요. 5년 상환(2년 거치).",
   url:"https://ols.sbiz.or.kr"},
- {name:"긴급경영안정자금 (일시적 경영애로)",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 7,000만원 · 정책자금 기준금리",
-  test:s=>s.ss&&s.drop?"check":null,
-  why:()=>"매출 급감 등 일시적으로 경영이 어려운 소상공인 대상. 매출 감소 폭 등 세부 요건은 분기별 공고마다 달라 확인이 필요해요.",
+ {name:"긴급경영안정자금 (일시적 경영애로)",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 7,000만원 · 정책자금 기준금리",ind:"pf",size:"ss",sit:"drop",
+  cond:()=>["chk","이번 분기 공고의 매출 감소 요건"],
+  about:"매출 급감 등 일시적으로 경영이 어려운 소상공인 대상. 세부 요건은 분기별 공고마다 달라요.",
   url:"https://ols.sbiz.or.kr"},
- {name:"희망리턴패키지 경영개선 지원",org:"소상공인시장진흥공단",cat:"재기",amt:"컨설팅 + 사업화 자금 최대 2,000만원",
-  test:s=>s.ss&&s.drop?(s.yrs>=1?"yes":"check"):null,
-  why:s=>s.yrs>=1?"2025년 1월 1일 이전 개업, 전년 대비 매출 10% 이상 감소(또는 경영위기지역 소재) 소상공인 대상. 폐업하지 않고 다시 일어서도록 컨설팅과 사업화 자금을 지원해요(자부담 있음).":"2025년 1월 1일 이전에 개업해야 해요. 업력을 확인하세요.",
+ {name:"희망리턴패키지 경영개선 지원",org:"소상공인시장진흥공단",cat:"재기",amt:"컨설팅 + 사업화 자금 최대 2,000만원",ind:"soft",size:"ss",sit:"drop",
+  cond:s=>s.yrs>=1?["ok","2025년 이전 개업"]:["chk","2025년 1월 1일 이전에 개업했는지"],
+  about:"전년 대비 매출 10% 이상 감소(또는 경영위기지역 소재) 소상공인이 폐업하지 않고 다시 일어서도록 컨설팅과 사업화 자금을 지원해요(자부담 있음).",
   url:"https://hope.sbiz.or.kr"},
- {name:"여성기업 지원",org:"여성기업종합지원센터",cat:"우대",amt:"여성기업확인서 · 공공구매·전용 지원사업",
-  test:s=>s.woman&&s.sme?"check":null,
-  why:()=>"여성기업확인서를 받으면 공공기관 우선구매, 여성기업 전용 창업·판로·교육 지원 대상이 돼요. 정책자금 우대 여부는 공고마다 달라요.",
+ {name:"희망리턴패키지 (폐업·재창업)",org:"소상공인시장진흥공단",cat:"재기",amt:"점포철거비 최대 600만원 · 재창업 최대 2,000만원",ind:"soft",size:"ss",sit:"close",
+  about:"점포철거비는 평당 20만원 이내 실비(임차 점포만). 사업정리 컨설팅·법률자문·채무조정, 재취업 시 전직장려수당, 재창업 사업화 자금(자부담 있음)까지 연계돼요.",
+  url:"https://hope.sbiz.or.kr"},
+ {name:"재도전특별자금",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"유형별 7,000만원~2억원",ind:"pf",size:"ss",sit:"close",
+  cond:()=>["chk","재창업·채무조정 등 유형별 요건"],
+  about:"재창업 준비·초기 단계, 채무조정 후 성실상환 중인 소상공인 대상 융자.",
+  url:"https://ols.sbiz.or.kr"},
+ {name:"혁신 소상공인 AI 활용 지원",org:"중소벤처기업부 (2026 신규)",cat:"성장",amt:"예산 144억원 · 세부 공고별",ind:"soft",size:"ss",sit:"grow",
+  cond:()=>["chk","공고의 선정 요건 (경쟁 선발)"],
+  about:"AI를 활용한 제품 개발, 서비스 도입으로 비용 절감·업무 효율화를 지원하는 2026년 신규 사업. 온라인 판매 소상공인은 상생성장촉진자금도 함께 보세요.",
+  url:"https://www.sbiz24.kr"},
+ {name:"강한소상공인 성장지원",org:"중소벤처기업부",cat:"성장",amt:"사업화 자금 최대 1억원",ind:"soft",size:"ss",sit:"grow",
+  cond:()=>["chk","공고의 선정 요건 (경쟁 선발)"],
+  about:"2026년 '소상공인 도약 지원'으로 통합. 창작자·스타트업 등과 협업해 새 사업모델을 만드는 기업가형 소상공인을 경쟁 선발해요.",
+  url:"https://www.sbiz24.kr"},
+ {name:"여성기업 지원",org:"여성기업종합지원센터",cat:"우대",amt:"여성기업확인서 · 공공구매·전용 지원사업",ind:"none",size:"sme",sit:"woman",
+  cond:()=>["chk","여성기업확인서 발급"],
+  about:"여성기업확인서를 받으면 공공기관 우선구매, 여성기업 전용 창업·판로·교육 지원 대상이 돼요. 정책자금 우대 여부는 공고마다 달라요.",
   url:"https://www.wbiz.or.kr"},
- {name:"장애인기업 지원",org:"장애인기업종합지원센터",cat:"우대",amt:"장애인기업확인서 · 창업·판로·사업화 지원",
-  test:s=>s.disabled&&s.sme?"check":null,
-  why:()=>"장애인기업확인서를 받으면 공공기관 우선구매, 장애인기업 전용 창업·판로·사업화 지원 대상이 돼요. 정책자금 우대 여부는 공고마다 달라요.",
+ {name:"장애인기업 지원",org:"장애인기업종합지원센터",cat:"우대",amt:"장애인기업확인서 · 창업·판로·사업화 지원",ind:"none",size:"sme",sit:"disabled",
+  cond:()=>["chk","장애인기업확인서 발급"],
+  about:"장애인기업확인서를 받으면 공공기관 우선구매, 장애인기업 전용 창업·판로·사업화 지원 대상이 돼요. 정책자금 우대 여부는 공고마다 달라요.",
   url:"https://www.debc.or.kr"},
- {name:"예비창업패키지",org:"중소벤처기업부·창업진흥원",cat:"받는 돈",amt:"사업화 자금 평균 4,000만원 (1단계 2,000만원 + 중간평가 후 추가)",pre:1,
-  test:s=>s.pre?"check":null,
-  why:()=>"사업자등록이 없는 예비창업자 대상. 사업계획서 평가로 선발하고, 1단계 2,000만원을 받은 뒤 중간평가를 통과하면 추가 지원해요. 2026년 접수는 3월에 끝났고 매년 초 K-Startup에 공고가 나와요.",
-  url:"https://www.k-startup.go.kr"},
- {name:"신사업창업사관학교",org:"소상공인시장진흥공단",cat:"받는 돈",amt:"창업 교육 + 점포 경영 체험 + 사업화 자금 최대 4,000만원",pre:1,
-  test:s=>s.pre?"check":null,
-  why:()=>"생활·서비스 분야 아이디어로 점포 창업을 준비하는 예비창업자 대상. 교육을 받고 실제 점포를 운영해 본 뒤 사업화 자금을 지원해요(금액은 2025년 공고 기준, 자부담 있음).",
-  url:"https://www.sbiz24.kr"},
- {name:"소상공인 창업 교육 (지식배움터)",org:"소상공인시장진흥공단",cat:"배우기",amt:"무료 온라인 교육",pre:1,
-  test:s=>s.pre?"yes":null,
-  why:()=>"상권 분석, 세무, 점포 운영 같은 창업 기초를 무료로 들을 수 있어요. 정책자금 신청에 필요한 교육 이수도 여기서 해요.",
-  url:"https://edu.sbiz.or.kr"},
- {name:"노란우산공제",org:"중소기업중앙회",cat:"줄이는 돈",amt:"소득공제 + 폐업 시 목돈",
-  test:s=>s.small?"yes":null,
-  why:()=>"소기업·소상공인 대표가 가입하는 퇴직금 성격의 공제. 납입액 소득공제, 압류 금지. 지자체에 따라 신규 가입 시 희망장려금도 지원합니다.",
+ {name:"노란우산공제",org:"중소기업중앙회",cat:"줄이는 돈",amt:"소득공제 + 폐업 시 목돈",ind:"yellow",size:"small",
+  about:"소기업·소상공인 대표가 가입하는 퇴직금 성격의 공제. 납입액 소득공제, 압류 금지. 지자체에 따라 신규 가입 시 희망장려금도 지원해요.",
   url:"https://www.8899.or.kr"},
- {name:"중소기업 특별세액감면",org:"국세청",cat:"줄이는 돈",amt:"소득세·법인세 5~30% 감면",
-  test:s=>s.sme?"check":null,
-  why:()=>"업종·지역(수도권 여부)·규모에 따라 감면율이 다릅니다. 도소매·의료업은 감면율이 낮은 편. 종합소득세 신고 때 세무대리인과 적용 여부를 확인하세요.",
+ {name:"중소기업 특별세액감면",org:"국세청",cat:"줄이는 돈",amt:"소득세·법인세 5~30% 감면",ind:"tax",size:"sme",
+  about:"업종·지역(수도권 여부)·규모에 따라 감면율이 달라요. 종합소득세 신고 때 세무대리인과 적용 여부를 확인하세요.",
   url:"https://www.hometax.go.kr"},
- {name:"희망리턴패키지",org:"소상공인시장진흥공단",cat:"재기",amt:"점포철거비 최대 600만원 · 재창업 최대 2,000만원",
-  test:s=>s.ss&&s.close?"yes":null,
-  why:()=>"점포철거비는 평당 20만원 이내 실비(임차 점포만). 사업정리 컨설팅·법률자문·채무조정, 재취업 시 전직장려수당, 재창업 사업화 자금(자부담 있음)까지 연계됩니다.",
-  url:"https://hope.sbiz.or.kr"},
- {name:"재도전특별자금",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"유형별 7,000만원~2억원",
-  test:s=>s.ss&&s.close?"check":null,
-  why:()=>"재창업 준비·초기 단계, 채무조정 후 성실상환 중인 소상공인 대상 융자. 유형별 조건이 달라 공고 확인이 필요합니다.",
-  url:"https://ols.sbiz.or.kr"},
- {name:"혁신 소상공인 AI 활용 지원",org:"중소벤처기업부 (2026 신규)",cat:"성장",amt:"예산 144억원 · 세부 공고별",
-  test:s=>s.ss&&s.grow?"check":null,
-  why:()=>"AI를 활용한 제품 개발, 서비스 도입으로 비용 절감·업무 효율화를 지원하는 2026년 신규 사업. 온라인 판매 소상공인은 상생성장촉진자금도 함께 보세요.",
+ {name:"중소기업 정책자금",org:"중소벤처기업진흥공단",cat:"빌리는 돈",amt:"운전·시설자금, 기업별 한도",ind:"kosmes",size:"sme",
+  cond:s=>s.ss?["chk","소상공인은 소진공 자금이 먼저예요. 업력·성장성 등 중진공 융자 요건"]:["ok","중소기업"],
+  about:"소상공인을 넘어선 소기업·중기업의 주 정책자금 창구. 창업 7년 이내 기업이 우선이에요.",
+  url:"https://www.kosmes.or.kr"},
+ {name:"예비창업패키지",org:"중소벤처기업부·창업진흥원",cat:"받는 돈",amt:"사업화 자금 평균 4,000만원 (1단계 2,000만원 + 중간평가 후 추가)",ind:"soft",size:"any",pre:1,
+  cond:()=>["chk","다음 공고 일정(매년 2~3월)과 사업계획서 준비"],
+  about:"사업자등록이 없는 예비창업자 대상. 사업계획서 평가로 선발하고, 1단계 2,000만원을 받은 뒤 중간평가를 통과하면 추가 지원해요. 2026년 접수는 3월에 끝났고 매년 초 K-Startup에 공고가 나와요.",
+  url:"https://www.k-startup.go.kr"},
+ {name:"신사업창업사관학교",org:"소상공인시장진흥공단",cat:"받는 돈",amt:"창업 교육 + 점포 경영 체험 + 사업화 자금 최대 4,000만원",ind:"soft",size:"any",pre:1,
+  cond:()=>["chk","다음 공고 일정(매년 2월쯤)과 선정 요건 (경쟁 선발)"],
+  about:"생활·서비스 분야 아이디어로 점포 창업을 준비하는 예비창업자 대상. 교육을 받고 실제 점포를 운영해 본 뒤 사업화 자금을 지원해요(금액은 2025년 공고 기준, 자부담 있음).",
   url:"https://www.sbiz24.kr"},
- {name:"강한소상공인 성장지원",org:"중소벤처기업부",cat:"성장",amt:"사업화 자금 최대 1억원",
-  test:s=>s.ss&&s.grow&&s.yrs>=1?"check":null,
-  why:()=>"2026년 '소상공인 도약 지원'으로 통합. 창작자·스타트업 등과 협업해 새 사업모델을 만드는 기업가형 소상공인 대상 경쟁 선발.",
-  url:"https://www.sbiz24.kr"},
- {name:"중소기업 정책자금",org:"중소벤처기업진흥공단",cat:"빌리는 돈",amt:"운전·시설자금, 기업별 한도",
-  test:s=>s.sme?(s.ss?"check":"yes"):null,
-  why:s=>s.ss?"소상공인은 소진공 자금이 먼저지만, 성장성·업종에 따라 중진공 자금도 가능합니다.":"소상공인을 넘어선 소기업·중기업의 주 정책자금 창구. 창업 7년 이내 기업이 우선입니다.",
-  url:"https://www.kosmes.or.kr"}
+ {name:"소상공인 창업 교육 (지식배움터)",org:"소상공인시장진흥공단",cat:"배우기",amt:"무료 온라인 교육",ind:"none",size:"any",pre:1,
+  about:"상권 분석, 세무, 점포 운영 같은 창업 기초를 무료로 들을 수 있어요. 정책자금 신청에 필요한 교육 이수도 여기서 해요.",
+  url:"https://edu.sbiz.or.kr"}
 ];
 
-// 확인 필요일 때 무엇을 확인할지
-const NEED={
- "소상공인 경영안정 바우처":()=>"2025년 12월 31일 이전에 개업했는지",
- "예비창업패키지":()=>"다음 공고 일정(매년 2~3월)과 사업계획서 준비",
- "신사업창업사관학교":()=>"다음 공고 일정(매년 2월쯤)과 선정 요건 (경쟁 선발)",
- "자영업자 고용보험료 지원":()=>"근로복지공단에서 자영업자 고용보험에 먼저 가입",
- "두루누리 사회보험료 지원":()=>"새로 뽑은 직원이 월보수 270만원 미만이고 최근 6개월 사회보험 가입 이력이 없는지",
- "소상공인 대환대출":()=>"NICE 신용점수가 919점 이하인지",
- "긴급경영안정자금 (재해 피해)":()=>"사업장이 특별재난지역으로 지정됐는지",
- "긴급경영안정자금 (일시적 경영애로)":()=>"이번 분기 공고의 매출 감소 요건",
- "희망리턴패키지 경영개선 지원":()=>"2025년 1월 1일 이전에 개업했는지",
- "재도전특별자금":()=>"재창업·채무조정 등 유형별 요건",
- "혁신 소상공인 AI 활용 지원":()=>"공고의 선정 요건 (경쟁 선발)",
- "강한소상공인 성장지원":()=>"공고의 선정 요건 (경쟁 선발)",
- "여성기업 지원":()=>"여성기업확인서 발급 (여성기업종합지원센터)",
- "장애인기업 지원":()=>"장애인기업확인서 발급 (장애인기업종합지원센터)",
- "중소기업 특별세액감면":s=>`${s.u.n}이(가) 조세특례제한법 감면 업종인지와 감면율 (세무대리인에게 확인)`,
- "중소기업 정책자금":()=>"업력·성장성 등 중진공 공고의 융자 요건"
-};
-// 업종은 통과해도 다른 조건 때문에 안 되는 이유
-const NOT={
- "소상공인 경영안정 바우처":s=>!s.ss?"소상공인만 대상이에요":s.rev>=10400?`연매출 1억 400만원 미만만 대상이에요 (입력 ${won(s.rev)})`:null,
- "자영업자 고용보험료 지원":s=>!s.ss?"소상공인만 대상이에요":s.emp>0?`직원 없는 1인 사업자만 대상이에요 (직원 ${s.emp}명)`:null,
- "두루누리 사회보험료 지원":s=>s.emp>=10?"근로자 10인 미만 사업장만 대상이에요":s.emp===0&&!s.hire?"고용한 직원이 없어요. 직원을 새로 뽑으면 대상이 돼요":null,
- "일반경영안정자금":s=>!s.ss?"소상공인만 대상이에요":null,
- "노란우산공제":s=>!s.small?"소기업·소상공인 대표만 가입할 수 있어요":null,
- "중소기업 특별세액감면":s=>!s.sme?"중소기업만 대상이에요":null,
- "중소기업 정책자금":s=>!s.sme?"중소기업만 대상이에요":null
-};
+// 지원 하나를 업종 → 규모 → 조건 순서로 판정
+function judge(p,s){
+  if(p.pre&&!s.pre)return {g:"no",stage:"대상",why:"사업자등록 전 예비창업자만 대상"};
+  if(!p.pre&&s.pre)return {g:"no",stage:"대상",why:"사업자등록을 해야 신청할 수 있어요"};
+  const steps=[["업종",IR[p.ind](s.u,s)],["규모",p.pre?["na","예비창업자"]:SR[p.size](s)],["조건",p.cond?p.cond(s):OK]];
+  const bad=steps.find(([,r])=>r[0]==="no");
+  if(bad)return {g:"no",stage:bad[0],why:bad[1][1],steps};
+  if(p.sit&&!s[p.sit])return {g:"sit",why:`'${SIT[p.sit]}'에 체크하면 판정해요`,steps};
+  const need=steps.filter(([,r])=>r[0]==="chk").map(([,r])=>r[1]);
+  return need.length?{g:"check",need,steps}:{g:"yes",steps};
+}
 
 function read(){
   const d=IND[+$("ind").value],rev=+$("rev").value||0,emp=Math.max(0,Math.floor(+$("emp").value||0));
@@ -596,40 +570,33 @@ function render(){
 
   // 제외 업종 경고
   const al=$("exAlert");
-  if(s.ex){al.hidden=false;al.innerHTML=`<b>지원 제외 업종:</b> ${s.u.n===s.ex.n?`[${s.ex.c}] ${s.ex.n}은(는) 정책자금 제외 업종이라`:`${s.u.n}은(는) 정책자금 제외 업종 [${s.ex.c}] ${s.ex.n}에 해당해`} 경영안정 바우처와 소진공 정책자금을 신청할 수 없습니다. 지원별 판정은 아래 표를 보세요.`}
+  if(s.ex){al.hidden=false;al.innerHTML=`<b>지원 제외 업종:</b> ${s.u.n===s.ex.n?`[${s.ex.c}] ${s.ex.n}은(는) 정책자금 제외 업종이라`:`${s.u.n}은(는) 정책자금 제외 업종 [${s.ex.c}] ${s.ex.n}에 해당해`} 경영안정 바우처와 소진공 정책자금을 신청할 수 없어요. 빠진 지원은 아래 '받을 수 없어요'에서 볼 수 있어요.`}
   else al.hidden=true;
   document.querySelectorAll("#exTbody tr").forEach(tr=>tr.classList.toggle("hl",!!s.ex&&tr.dataset.id===s.ex.id));
 
-  // 업종 기준 지원별 판정표
-  const lab={ok:"업종 통과",no:"업종 제외",chk:"공고마다 다름"};
-  $("mxTitle").innerHTML=`${s.u.n}${s.u.c?`<small>${s.u.c}</small>`:""}`;
-  $("mx").innerHTML=MX.map(m=>{const [st,why]=m.f(s.u,s);return `<tr><td>${m.n}</td><td><span class="st ${st}">${lab[st]}</span></td><td>${why}</td></tr>`}).join("");
-
-  const all=P.map(p=>{if(s.pre&&!p.pre)return null;let st=p.test(s);if(!st)return null;
-    if(s.ex&&HARD.has(p.name))return {p,st:"no"};
-    if(s.ex&&p.name==="긴급경영안정자금 (재해 피해)")return /특별재난지역/.test(s.ex.ok)?{p,st:"check"}:{p,st:"no"};
-    if(s.u.ei&&p.name==="자영업자 고용보험료 지원")return {p,st:"no"};
-    if(s.ex&&SOFT.has(p.name))return {p,st:"check",soft:true};
-    return {p,st}}).filter(Boolean);
-  const res=all.filter(x=>x.st!=="no").sort((a,b)=>(a.st==="yes"?0:1)-(b.st==="yes"?0:1));
-  const exWhy=p=>p.name==="자영업자 고용보험료 지원"&&s.u.ei?"부동산 임대업은 가입 제한 업종이에요":`제외 업종이에요 ([${s.ex.c}] ${s.ex.n})`;
-  const out=all.filter(x=>x.st==="no").map(x=>({p:x.p,why:exWhy(x.p)}));
-  if(s.pre)P.forEach(p=>{if(!p.pre&&NOT[p.name])out.push({p,why:"사업자등록을 해야 신청할 수 있어요"})});
-  else P.forEach(p=>{if(p.test(s))return;
-    if(s.ex&&HARD.has(p.name)&&NOT[p.name]){out.push({p,why:exWhy(p)});return}
-    const r=NOT[p.name]&&NOT[p.name](s);if(r)out.push({p,why:r})});
-  $("exSec").hidden=!out.length;
-  $("exList").innerHTML=out.map(({p,why})=>`<div class="exitem"><s>${p.name}</s><span>${why}</span></div>`).join("");
-  const ny=res.filter(x=>x.st==="yes").length;
-  $("nYes").textContent=`해당 ${ny}`;$("nChk").textContent=`확인 필요 ${res.length-ny}`;
-  $("list").innerHTML=res.length?res.map(({p,st,soft})=>`
-    <article class="card ${st}">
-      <div class="card-top"><h3>${p.name}</h3><span class="cat">${p.cat}</span></div>
-      <div class="meta">${p.org} · <span class="amt">${p.amt}</span></div>
-      ${st==="check"?`<p class="need"><b>확인할 것</b>${[soft?`공고의 제외 업종에 ${s.u.n}이(가) 들어 있는지`:"",NEED[p.name]?NEED[p.name](s):""].filter(Boolean).join(" · ")||"공고의 세부 요건"}</p>`:""}
-      <p class="why">${p.why(s)}</p>
-      <a href="${p.url}" target="_blank" rel="noopener">${p.url.replace(/^https:\/\//,"")} →</a>
-    </article>`).join(""):`<p class="empty">입력한 조건으로는 맞는 지원이 없어요. 대기업·중견기업 대상 사업은 기업마당에서 찾아보세요.</p>`;
+  // 지원 판정: 모든 지원을 네 묶음 중 하나로
+  const J=P.map(p=>({p,...judge(p,s)}));
+  const grp=g=>J.filter(x=>x.g===g);
+  const yes=grp("yes"),chk=grp("check"),sit=grp("sit"),no=grp("no");
+  const MK={ok:"✓",chk:"?",no:"✕",na:"–"};
+  const badge=([lab,[st,why]])=>`<span class="sb ${st}" title="${why||""}">${lab} ${MK[st]}</span>`;
+  const card=x=>`
+    <article class="card ${x.g}">
+      <div class="card-top"><h3>${x.p.name}</h3><span class="cat">${x.p.cat}</span></div>
+      <div class="meta">${x.p.org} · <span class="amt">${x.p.amt}</span></div>
+      <div class="steps">${x.steps.map(badge).join("")}</div>
+      ${x.need?`<p class="need"><b>확인할 것</b>${x.need.join(" · ")}</p>`:""}
+      <p class="why">${x.p.about}</p>
+      <a href="${x.p.url}" target="_blank" rel="noopener">${x.p.url.replace(/^https:\/\//,"")} →</a>
+    </article>`;
+  const row=(x,tag)=>`<div class="row"><div class="rname"><b>${x.p.name}</b><span class="meta">${x.p.amt}</span></div><div class="rwhy">${tag}<span>${x.why}</span></div></div>`;
+  $("jTotal").textContent=`전체 ${P.length}개`;
+  $("jSum").innerHTML=`<span class="pill yes">받을 수 있어요 ${yes.length}</span><span class="pill check">확인하면 가능 ${chk.length}</span><span class="pill sit">상황에 맞으면 가능 ${sit.length}</span><span class="pill no">받을 수 없어요 ${no.length}</span>`;
+  $("hYes").hidden=!yes.length;$("gYes").innerHTML=yes.map(card).join("");
+  $("hChk").hidden=!chk.length;$("gChk").innerHTML=chk.map(card).join("");
+  $("gNone").hidden=!!(yes.length||chk.length);
+  $("dSit").hidden=!sit.length;$("nSit").textContent=sit.length;$("gSit").innerHTML=sit.map(x=>row(x,"")).join("");
+  $("dNo").hidden=!no.length;$("nNo").textContent=no.length;$("gNo").innerHTML=no.map(x=>row(x,`<span class="sb no">${x.stage} ✕</span>`)).join("");
   $("revTxt").textContent=s.pre?"예비창업자는 비워 둬도 돼요":won(s.rev);
 }
 let touched=false;
@@ -674,7 +641,7 @@ function renderNotices(){
 ["region","yrs","nq","nsoon","nsmall"].forEach(id=>$(id).addEventListener("input",()=>{nShown=20;renderNotices()}));
 $("nMore").addEventListener("click",()=>{nShown+=20;renderNotices()});
 fetch("data/notices.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{NOTICE=d;renderNotices()})
-  .catch(()=>{$("nUpd").textContent="공고 파일을 불러오지 못했어요. 사이트 주소(github.io)로 열었는지 확인하세요."});
+  .catch(()=>{document.querySelector(".notices").hidden=true}); // 공고 파일이 없는 곳(미리보기)에서는 숨김
 </script>
 </body>
 </html>
