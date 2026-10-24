@@ -10,6 +10,7 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -27,11 +28,19 @@ KEEP = ("소상공인", "자영업", "개인사업자", "전통시장", "상인"
 ONLY_BIG = ("중견기업", "대기업")
 
 
-def call_api(key):
+def call_api(key, tries=3):
+    """기업마당 서버가 느리거나 끊기면 30초 쉬고 다시 시도한다."""
     query = urllib.parse.urlencode({"crtfcKey": key, "dataType": "json", "searchCnt": "0"})
     req = urllib.request.Request(f"{API}?{query}", headers={"User-Agent": "Mozilla/5.0 (bizzsubsidy)"})
-    with urllib.request.urlopen(req, timeout=90) as res:
-        return json.loads(res.read().decode("utf-8"))
+    for n in range(1, tries + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=180) as res:
+                return json.loads(res.read().decode("utf-8"))
+        except Exception as e:  # 시간 초과, 접속 끊김, 깨진 응답
+            print(f"{n}번째 시도 실패: {type(e).__name__}: {e}")
+            if n == tries:
+                raise
+            time.sleep(30)
 
 
 def items_of(data):
@@ -148,9 +157,14 @@ def main():
         return 1
 
     today = dt.datetime.now(KST).date()
-    seen, items = set(), []
+    seen, items, broken = set(), [], 0
     for it in raw:
-        row = convert(it, today)
+        try:
+            row = convert(it, today)
+        except Exception as e:  # 공고 하나가 이상해도 나머지는 저장
+            broken += 1
+            print("건너뛴 공고:", str(it.get("pblancId") if isinstance(it, dict) else it)[:60], e)
+            continue
         if row and row["id"] not in seen:
             seen.add(row["id"])
             items.append(row)
