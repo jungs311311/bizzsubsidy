@@ -47,7 +47,7 @@ header p{margin:6px 0 0;color:var(--muted);max-width:60ch}
 .stamp{display:inline-block;font-family:var(--f-num);font-size:12px;letter-spacing:.04em;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:1px 8px;margin-bottom:10px}
 .cols{display:grid;gap:20px;grid-template-columns:1fr}
 @media (min-width:860px){.cols{grid-template-columns:minmax(0,380px) minmax(0,1fr);align-items:start}
-  .form{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px)}}
+  .form{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);max-height:calc(100vh - 32px - env(safe-area-inset-top,0px));max-height:calc(100dvh - 32px - env(safe-area-inset-top,0px));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}}
 .form{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:16px}
 .field{display:grid;gap:6px;min-width:0}
 .field>label,.lbl{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.02em}
@@ -597,6 +597,7 @@ function renderNotices(){
   const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
   const soonLimit=new Date(Date.now()+(9*3600e3)+14*864e5).toISOString().slice(0,10);
   const region=$("region").value,q=$("nq").value.trim().toLowerCase();
+  NOTICE.items.forEach(it=>{if(it.regions.length>=10)it.regions=[]}); // 17개 시·도가 다 붙은 옛 데이터는 전국으로
   const rows=NOTICE.items.filter(it=>
     (!region||!it.regions.length||it.regions.includes(region))&&
     (!$("nsmall").checked||it.forSmall)&&

@@ -62,16 +62,40 @@ def dates_in(text):
     return found
 
 
-def regions_of(item):
-    text = " ".join([str(item.get("hashTags") or item.get("hashtags") or ""),
-                     str(item.get("pblancNm") or item.get("title") or "")[:20]])
-    return [r for r in REGIONS if r in text]
+ORG_REGION = {
+    "서울특별시": "서울", "부산광역시": "부산", "대구광역시": "대구", "인천광역시": "인천",
+    "광주광역시": "광주", "대전광역시": "대전", "울산광역시": "울산", "세종특별자치시": "세종",
+    "경기도": "경기", "강원특별자치도": "강원", "강원도": "강원", "충청북도": "충북",
+    "충청남도": "충남", "전북특별자치도": "전북", "전라북도": "전북", "전라남도": "전남",
+    "경상북도": "경북", "경상남도": "경남", "제주특별자치도": "제주",
+}
+
+
+def hashtags_of(item):
+    raw = item.get("hashTags") or item.get("hashtags") or ""
+    if isinstance(raw, list):
+        raw = ",".join(map(str, raw))
+    return [t.strip() for t in str(raw).split(",") if t.strip()]
+
+
+def regions_of(item, tags):
+    """지역 공고면 그 시·도, 전국 공고면 빈 목록."""
+    found = set()
+    title = str(item.get("pblancNm") or item.get("title") or "")
+    for bracket in re.findall(r"\[([^\]]+)\]", title[:20]):  # [경북], [충남] 같은 머리말
+        found.update(r for r in REGIONS if r in bracket)
+    org = str(item.get("jrsdInsttNm") or item.get("author") or "")
+    found.update(v for k, v in ORG_REGION.items() if k in org)  # 소관기관이 시·도
+    tag_regions = {r for r in REGIONS if any(r in t for t in tags)}
+    if len(tag_regions) < 10:  # 17개 시·도가 다 붙은 태그는 지역 정보로 보지 않음
+        found.update(tag_regions)
+    return [r for r in REGIONS if r in found]
 
 
 def convert(item, today):
     title = clean(item.get("pblancNm") or item.get("title"))
     target = clean(item.get("trgetNm"))
-    tags = [t.strip() for t in str(item.get("hashTags") or "").split(",") if t.strip()]
+    tags = hashtags_of(item)
     period = clean(item.get("reqstBeginEndDe") or item.get("reqstDt"))
     ds = dates_in(period)
     start = ds[0] if len(ds) >= 2 else None
@@ -101,8 +125,8 @@ def convert(item, today):
         "period": period,
         "start": start.isoformat() if start else None,
         "end": end.isoformat() if end else None,
-        "regions": regions_of(item),
-        "tags": tags[:12],
+        "regions": regions_of(item, tags),
+        "tags": [t for t in tags if t not in REGIONS][:12],
         "created": clean(item.get("creatPnttm") or item.get("pubDate"))[:10],
         "forSmall": any(k in text for k in ("소상공인", "자영업", "개인사업자", "전통시장", "상인")),
     }
