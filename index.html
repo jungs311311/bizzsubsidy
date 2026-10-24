@@ -59,6 +59,8 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
 .checks{display:grid;gap:8px}
 .chk{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:14px;line-height:1.45}
 .chk input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
+.chkh{margin:6px 0 0;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em}
+.chkh:first-child{margin-top:0}
 .chk:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
 .example{font-size:12px;color:var(--warn);background:var(--warn-soft);border-radius:6px;padding:6px 10px}
 .results{display:grid;gap:18px;min-width:0}
@@ -185,21 +187,30 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
       <div class="field">
         <span class="lbl">해당하는 상황</span>
         <div class="checks">
+          <p class="chkh">직원·고용</p>
           <label class="chk"><input type="checkbox" id="hire"> 최근 직원을 새로 뽑았거나 뽑을 예정 (월급 270만원 미만)</label>
           <label class="chk"><input type="checkbox" id="hireYouth"> 만 15~34세 청년을 정규직으로 뽑을 예정</label>
           <label class="chk"><input type="checkbox" id="staffUp"> 올해 직원 수가 작년보다 늘었음 (늘릴 예정)</label>
           <label class="chk"><input type="checkbox" id="hireVuln"> 취업취약계층(국민취업지원제도 이수자, 장애인 등)을 채용할 예정</label>
           <label class="chk"><input type="checkbox" id="leave"> 직원이 육아휴직·육아기 근로시간 단축을 쓸 예정</label>
-          <label class="chk"><input type="checkbox" id="youth"> 대표가 만 39세 이하이거나 청년을 고용 중</label>
-          <label class="chk"><input type="checkbox" id="credit"> 신용점수(NICE)가 839점 이하</label>
+          <label class="chk"><input type="checkbox" id="seniorKeep"> 정년(60세 이상)이 된 직원을 계속 고용할 예정</label>
+          <label class="chk"><input type="checkbox" id="shortHours"> 직원 근로시간 단축이나 재택·시차출퇴근을 도입할 예정</label>
+          <label class="chk"><input type="checkbox" id="furlough"> 매출이 줄어 직원을 휴업·휴직시켜야 함</label>
+          <p class="chkh">자금·경영</p>
           <label class="chk"><input type="checkbox" id="eij"> 사장님 본인이 자영업자 고용보험에 가입함</label>
+          <label class="chk"><input type="checkbox" id="credit"> 신용점수(NICE)가 839점 이하</label>
+          <label class="chk"><input type="checkbox" id="hiloan"> 연 7% 이상 고금리 사업자 대출이 있음</label>
+          <label class="chk"><input type="checkbox" id="debtTrouble"> 대출 상환이 어렵거나 연체 중</label>
+          <label class="chk"><input type="checkbox" id="drop"> 매출이 전년보다 10% 이상 줄었음</label>
+          <label class="chk"><input type="checkbox" id="disaster"> 화재·수해 등 재해 피해를 입음</label>
           <label class="chk"><input type="checkbox" id="close"> 폐업·업종 전환·재창업을 고민 중</label>
           <label class="chk"><input type="checkbox" id="grow"> 온라인 판매, AI·키오스크 도입, 브랜드 성장에 관심 있음</label>
-          <label class="chk"><input type="checkbox" id="drop"> 매출이 전년보다 10% 이상 줄었음</label>
-          <label class="chk"><input type="checkbox" id="hiloan"> 연 7% 이상 고금리 사업자 대출이 있음</label>
-          <label class="chk"><input type="checkbox" id="disaster"> 화재·수해 등 재해 피해를 입음</label>
+          <p class="chkh">대표자</p>
+          <label class="chk"><input type="checkbox" id="youth"> 대표가 만 39세 이하이거나 청년을 고용 중</label>
           <label class="chk"><input type="checkbox" id="woman"> 대표가 여성</label>
           <label class="chk"><input type="checkbox" id="disabled"> 대표가 장애인</label>
+          <p class="chkh">약국</p>
+          <label class="chk"><input type="checkbox" id="nightPharm"> 밤 10시 이후 심야·휴일 운영을 할 수 있음</label>
         </div>
       </div>
     </form>
@@ -455,8 +466,15 @@ const IR={ // 1단계 업종 (각 지원의 공고·법령에 적힌 제외 업�
   if(x.t==="partial")return ["chk",x.why];
   if(x.t==="clinic")return ["chk","의원·치과·한의원은 요양급여 수입이 80% 이상이고 종합소득금액이 1억원 이하일 때만 감면돼요"];
   return ["ok",`감면 업종 (${x.lab})`]},
+ deemed:(u,s)=>{const c=u.c||"";
+  if(s.d.k==="food")return /^551/.test(c)?["chk","숙박업은 음식 제공 매출이 있을 때만 공제돼요"]:["ok","음식점업"];
+  if(s.d.k==="mfg")return ["chk","면세 농·축·수산물을 원재료로 쓰는 제조업이면 공제 대상"];
+  return ["no","면세 농·축·수산물을 재료로 쓰는 음식점·제조업 등만 대상"]},
+ pharmOnly:u=>u.x==="pharm"?["ok","약국"]:["no","약국만 대상"],
  none:()=>["ok","업종 제한 없음"]
 };
+// 성실신고확인대상 수입금액 기준(만원): 도소매·농림어업 15억, 제조·음식숙박·운수·정보통신·금융·건설 7.5억, 그 밖의 서비스 5억
+const SINCERE=k=>["retail","farm"].includes(k)?150000:["mfg","food","trans","it","fin","build"].includes(k)?75000:50000;
 // 유흥·사행·향락 계열 제외 업종
 const VICE=new Set(["bar","dance","casino","adultgame","kiss","massage","gambledev","gamesw"]);
 // 창업중소기업 세액감면(조세특례제한법 제6조) 업종 판정
@@ -559,7 +577,7 @@ const SR={ // 2단계 규모
 };
 const OK=["ok",""];
 // 체크해야 판정하는 상황
-const SIT={hireYouth:"만 15~34세 청년을 정규직으로 뽑을 예정",staffUp:"올해 직원 수가 작년보다 늘었음 (늘릴 예정)",hireVuln:"취업취약계층을 채용할 예정",leave:"직원이 육아휴직·육아기 근로시간 단축을 쓸 예정",youth:"대표가 만 39세 이하이거나 청년을 고용 중",credit:"신용점수(NICE)가 839점 이하",hiloan:"연 7% 이상 고금리 사업자 대출이 있음",disaster:"화재·수해 등 재해 피해를 입음",drop:"매출이 전년보다 10% 이상 줄었음",woman:"대표가 여성",disabled:"대표가 장애인",close:"폐업·업종 전환·재창업을 고민 중",grow:"온라인 판매, AI·키오스크 도입, 브랜드 성장에 관심 있음"};
+const SIT={seniorKeep:"정년(60세 이상)이 된 직원을 계속 고용할 예정",shortHours:"직원 근로시간 단축이나 재택·시차출퇴근을 도입할 예정",furlough:"매출이 줄어 직원을 휴업·휴직시켜야 함",debtTrouble:"대출 상환이 어렵거나 연체 중",nightPharm:"밤 10시 이후 심야·휴일 운영을 할 수 있음",hireYouth:"만 15~34세 청년을 정규직으로 뽑을 예정",staffUp:"올해 직원 수가 작년보다 늘었음 (늘릴 예정)",hireVuln:"취업취약계층을 채용할 예정",leave:"직원이 육아휴직·육아기 근로시간 단축을 쓸 예정",youth:"대표가 만 39세 이하이거나 청년을 고용 중",credit:"신용점수(NICE)가 839점 이하",hiloan:"연 7% 이상 고금리 사업자 대출이 있음",disaster:"화재·수해 등 재해 피해를 입음",drop:"매출이 전년보다 10% 이상 줄었음",woman:"대표가 여성",disabled:"대표가 장애인",close:"폐업·업종 전환·재창업을 고민 중",grow:"온라인 판매, AI·키오스크 도입, 브랜드 성장에 관심 있음"};
 
 const $=id=>document.getElementById(id);
 IND.forEach((d,i)=>{const o=document.createElement("option");o.value=i;o.textContent=d.n;$("ind").appendChild(o)});
@@ -620,6 +638,43 @@ const P=[
   cond:s=>s.yrs===7?["no","창업 후 5년이 지나 감면 기간이 끝났어요"]:["chk",`${s.yrs===3?"창업 후 5년 안인지, ":""}창업 당시 나이(만 34세 이하면 청년)와 사업장 위치 — 이에 따라 50~100%`],
   about:"청년(만 34세 이하) 창업이나 수입금액 1억 400만원 이하면 수도권 밖 100%, 수도권 75%, 과밀억제권역 50% 감면돼요(2026년 이후 창업 기준). 그 밖의 창업은 수도권 밖 50%, 수도권 25%예요.",
   url:"https://www.hometax.go.kr"},
+ {name:"신용카드 매출전표 발행세액공제",org:"국세청",cat:"줄이는 돈",amt:"카드·현금영수증 과세 매출의 1.3% · 연 최대 1,000만원",ind:"none",size:"any",when:"2026년 말까지 (2027년부터 1.2%·500만원으로 줄어들 예정)",
+  cond:s=>s.rev>100000?["no","직전 연도 공급가액 10억원 이하 개인사업자만 대상"]:["ok","공급가액 10억원 이하"],
+  about:"부가세 신고 때 카드·현금영수증 매출의 1.3%를 부가세에서 빼줘요. 개인사업자만 해당하고 법인은 제외예요. 약국은 처방조제(면세) 매출은 빠지고 일반약·건강기능식품·화장품 같은 과세 매출만 대상이에요.",
+  url:"https://www.hometax.go.kr"},
+ {name:"의제매입세액공제",org:"국세청",cat:"줄이는 돈",ind:"deemed",size:"any",
+  amt:s=>{const c=s.u.c||"";if(/^5621[12]$/.test(c))return "면세 농산물 등 구입액의 2/102";
+    if(s.d.k==="food")return s.rev<=40000?"면세 농산물 등 구입액의 9/109 (매출 4억 이하)":"면세 농산물 등 구입액의 8/108";
+    return "면세 원재료 구입액의 일정 비율"},
+  about:"쌀·채소·고기·수산물처럼 부가세가 없는 재료를 사도 일정 비율만큼 부가세에서 빼줘요. 매출 4억원 이하 개인 음식점의 9/109 우대율은 2028년까지 연장될 예정이에요.",
+  url:"https://www.hometax.go.kr"},
+ {name:"성실신고확인비용 세액공제",org:"국세청",cat:"줄이는 돈",amt:"확인 수수료의 60% · 최대 120만원",ind:"none",size:"any",
+  cond:s=>{const t=SINCERE(s.d.k);return s.rev>=t?["ok",`성실신고 대상 (이 업종은 수입금액 ${t/10000}억원 이상)`]:["no",`성실신고 대상이 아니에요 (이 업종은 수입금액 ${t/10000}억원 이상일 때 대상)`]},
+  about:"수입금액이 업종별 기준을 넘으면 종합소득세 신고 때 세무사 등의 성실신고 확인을 받아야 해요. 그 수수료의 60%를 소득세에서 빼주고, 본인·가족 의료비와 교육비 세액공제도 받을 수 있어요.",
+  url:"https://www.hometax.go.kr"},
+ {name:"고령자 계속고용장려금",org:"고용노동부",cat:"받는 돈",amt:"계속 고용한 60세 이상 직원 1인당 월 30만원 · 최대 2년",ind:"none",size:"sme",sit:"seniorKeep",
+  cond:s=>s.emp===0?["no","고용한 직원이 없어요"]:["chk","취업규칙에 정년(60세 이상)이 있고, 정년 연장·폐지·재고용 중 하나를 도입했는지"],
+  about:"정년이 된 직원을 계속 고용하는 제도를 도입하면 분기마다 지원해요. 계속고용 시작일부터 6개월 안에 고용24에서 신청해야 해요. 사업주의 4촌 이내 친족은 제외예요.",
+  url:"https://www.work24.go.kr"},
+ {name:"근로시간 단축·유연근무 장려금",org:"고용노동부",cat:"받는 돈",amt:"단축 근로자 1인당 월 최대 50만원 · 유연근무 월 최대 60만원",ind:"none",size:"sme",sit:"shortHours",
+  cond:s=>s.emp===0?["no","고용한 직원이 없어요"]:["ok",s.emp<10?"10인 미만 사업장은 최대 3명까지":"피보험자의 30%까지"],
+  about:"직원이 주 15~35시간으로 근로시간을 줄이면 장려금 월 30만원과 임금 감소 보전 월 20만원을 지원해요(워라밸일자리 장려금). 재택·시차출퇴근 같은 유연근무를 하면 1인당 월 최대 60만원(육아기 자녀가 있으면 2배)까지 지원해요.",
+  url:"https://www.work24.go.kr"},
+ {name:"고용유지지원금",org:"고용노동부",cat:"받는 돈",amt:"휴업·휴직수당의 2/3 · 1일 최대 68,100원 · 연 180일",ind:"none",size:"any",sit:"furlough",
+  cond:s=>s.emp===0?["no","고용한 직원이 없어요"]:["chk","기준달 매출이 직전 6개월 월평균보다 15% 이상 줄었는지"],
+  about:"경영이 어려워 직원을 해고하지 않고 휴업·휴직시키면 수당 일부를 지원해요. 휴업·휴직 전에 고용유지조치 계획을 고용센터에 먼저 신고해야 해요.",
+  url:"https://www.work24.go.kr"},
+ {name:"새출발기금 (채무조정)",org:"캠코·신용회복위원회",cat:"재기",amt:"연체 채무 원금 60~80% 감면(취약계층 최대 90%) · 최대 20년 분할상환",ind:"none",size:"ss",sit:"debtTrouble",
+  cond:s=>["chk",`${s.yrs===0?"2020년 4월~2025년 6월 사이에 사업한 적이 있는지, ":""}90일 이상 연체 중인지(원금 감면) 또는 연체 위험이 큰지(이자 감면·기간 연장)`],
+  about:"사업대출과 가계대출을 함께 조정해요. 대상 채무는 최대 15억원(담보 10억, 무담보 5억)이에요. 문의: 새출발기금 1660-1378, 신용회복위원회 1600-5500.",
+  url:"https://www.xn--jv4b11h2kc4qb6u.kr"},
+ {name:"공공심야약국",org:"보건복지부·지자체",cat:"받는 돈",amt:"심야 운영 시간당 4만원 (인구감소지역 6만원)",ind:"pharmOnly",size:"any",sit:"nightPharm",
+  cond:()=>["chk","사업장 시·군·구 보건소가 올해 공공심야약국을 모집하는지"],
+  about:"지자체가 공모로 지정해요. 보통 매일 밤 10시부터 자정(지역에 따라 새벽 1시)까지 휴일 없이 운영하는 조건이에요. 연간 일반지역 최대 4,380만원, 인구감소지역 최대 6,570만원 수준이에요.",
+  url:"https://www.mohw.go.kr"},
+ {name:"소상공인 온라인 판로지원",org:"중소벤처기업부·중소벤처기업유통원",cat:"성장",tag:"경쟁 선발",amt:"상세페이지·콘텐츠 제작, 쇼핑몰 입점, 라이브커머스, 홈쇼핑 입점",ind:"unknown",size:"ss",sit:"grow",when:"2026년 접수 끝남 (1차·2차)",
+  about:"판판대로에서 신청해요. 상품 개선, 상세페이지·콘텐츠 제작, 온라인 쇼핑몰 판매, 라이브커머스, SNS 마케팅, 물류, TV·데이터 홈쇼핑 입점까지 지원해요(자부담 있음).",
+  url:"https://fanfandaero.kr"},
  {name:"노란우산공제",org:"중소기업중앙회",cat:"줄이는 돈",amt:"소득공제 + 폐업 시 목돈",ind:"yellow",size:"small",
   about:"소기업·소상공인 대표가 가입하는 퇴직금 성격의 공제. 납입액 소득공제, 압류 금지. 지자체에 따라 신규 가입 시 희망장려금도 지원해요.",
   url:"https://www.8899.or.kr"},
@@ -709,7 +764,7 @@ function read(){
   const ex=u.x?EXM[u.x]:(u.six&&yrs<1?EXM.estate:null);
   return {d,u,rev,emp,sme,small,ss,yrs,ex,pre:yrs===-1,region:$("region").value,
     hire:$("hire").checked,youth:$("youth").checked,credit:$("credit").checked,eij:$("eij").checked,close:$("close").checked,grow:$("grow").checked,
-    drop:$("drop").checked,hireYouth:$("hireYouth").checked,staffUp:$("staffUp").checked,hireVuln:$("hireVuln").checked,leave:$("leave").checked,hiloan:$("hiloan").checked,disaster:$("disaster").checked,woman:$("woman").checked,disabled:$("disabled").checked};
+    drop:$("drop").checked,seniorKeep:$("seniorKeep").checked,shortHours:$("shortHours").checked,furlough:$("furlough").checked,debtTrouble:$("debtTrouble").checked,nightPharm:$("nightPharm").checked,hireYouth:$("hireYouth").checked,staffUp:$("staffUp").checked,hireVuln:$("hireVuln").checked,leave:$("leave").checked,hiloan:$("hiloan").checked,disaster:$("disaster").checked,woman:$("woman").checked,disabled:$("disabled").checked};
 }
 function render(){
   const s=read(),d=s.d;
