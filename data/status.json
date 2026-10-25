@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-25T16:28+09:00",
+ "updatedAt": "2026-10-25T19:34+09:00",
  "programs": {
   "소상공인 경영안정 바우처": {
    "kind": "notice",
@@ -856,6 +856,72 @@
    "local": []
   },
   "소상공인 창업 교육 (지식배움터)": {
+   "kind": "law",
+   "national": [],
+   "local": []
+  },
+  "창업중심대학 (예비창업자)": {
+   "kind": "notice",
+   "national": [],
+   "local": []
+  },
+  "청년창업사관학교": {
+   "kind": "notice",
+   "national": [],
+   "local": []
+  },
+  "재도전성공패키지": {
+   "kind": "notice",
+   "national": [],
+   "local": []
+  },
+  "청년전용창업자금": {
+   "kind": "notice",
+   "national": [],
+   "local": []
+  },
+  "창업기반지원자금": {
+   "kind": "notice",
+   "national": [],
+   "local": []
+  },
+  "장애인 창업사업화 지원": {
+   "kind": "notice",
+   "national": [
+    {
+     "id": "PBLN_000000000118350",
+     "title": "2026년 장애인 창업 컨설팅지원 대상자 모집 공고",
+     "url": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000118350",
+     "org": "중소벤처기업부",
+     "start": null,
+     "end": null,
+     "period": "예산 소진시까지",
+     "regions": []
+    }
+   ],
+   "local": []
+  },
+  "사회적기업 창업지원": {
+   "kind": "notice",
+   "national": [],
+   "local": []
+  },
+  "청년농업인 영농정착지원": {
+   "kind": "notice",
+   "national": [],
+   "local": []
+  },
+  "귀농 농업창업·주택구입 융자": {
+   "kind": "notice",
+   "national": [],
+   "local": []
+  },
+  "소상공인 창업·경영 교육": {
+   "kind": "law",
+   "national": [],
+   "local": []
+  },
+  "소상공인365 상권분석": {
    "kind": "law",
    "national": [],
    "local": []
