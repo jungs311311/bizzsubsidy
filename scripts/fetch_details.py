@@ -54,6 +54,16 @@ def summary_text(it):
 
 
 def one(it):
+    try:
+        return _one(it)
+    except Exception as e:  # 공고 하나가 이상해도 나머지는 계속
+        print(f"  분석 실패 {it.get('pblancId')}: {type(e).__name__}: {str(e)[:80]}")
+        d = details.extract(summary_text(it), title=str(it.get("pblancNm") or ""))
+        d.update(src="소개글", f="", v=0)
+        return str(it.get("pblancId")), d
+
+
+def _one(it):
     url, name = pick_file(it)
     doc = ""
     if url:
@@ -104,8 +114,11 @@ def run(raw_items, keep_ids):
         by_src[d["src"]] = by_src.get(d["src"], 0) + 1
     found = sum(1 for d in result.values() if "amt" in d or "loan" in d)
     print(f"공고문 분석 끝: {len(result)}건 {by_src}, 금액 찾음 {found}건, {time.time() - t0:.0f}초")
-    OUT.write_text(json.dumps({
+    body = json.dumps({
         "updatedAt": dt.datetime.now(KST).isoformat(timespec="minutes"),
         "count": len(result), "withAmount": found,
         "items": result,
-    }, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    }, ensure_ascii=False, separators=(",", ":"))
+    tmp = OUT.with_suffix(".tmp")
+    tmp.write_bytes(body.encode("utf-8", "replace"))  # 깨진 글자가 있어도 파일이 비지 않게
+    tmp.replace(OUT)

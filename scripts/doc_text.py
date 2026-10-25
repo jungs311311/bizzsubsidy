@@ -46,7 +46,7 @@ def _hwp_para(buf):
             out.append("\n")
         elif c == 9:
             out.append(" ")
-        elif c >= 32:
+        elif c >= 32 and not 0xD800 <= c <= 0xDFFF:  # 짝 없는 서로게이트는 저장할 때 오류를 내므로 뺌
             out.append(chr(c))
         i += 1
     return "".join(out)
