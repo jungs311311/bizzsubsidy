@@ -1,0 +1,63 @@
+LINK /images/bizinfo/sub/app_download_bg.png
+LINK ) no-repeat center center;background-size: 50px 50px; } */
+/* .support_project_detail .attached_file_list li .right_btn .icon_download{background:url(
+LINK /images/bizinfo/sub/attachments_btn_download.svg
+LINK app_download
+LINK app_download_button
+LINK app_download_button
+LINK /images/bizinfo/common/app_download.png
+LINK /cmm/fms/fileDown.do?atchFileId=FILE_000000000771551&fileSn=1
+LINK basic-btn01 btn-gray-bd icon_download
+LINK ></button>
+            </div>
+        </div>
+    </div>
+    <!-- //qr_popup -->
+
+        <!-- app_download_popup -->
+        <div class=
+LINK popup app_download_popup
+LINK app_download
+LINK app_download_popup_close
+LINK ></button>
+                </div>
+            </div>
+        </div>
+        <!-- //app_download_popup -->
+
+
+
+
+<script type=
+LINK #app_download
+CTX 고(최종).hwpx 바로보기 새 창 열기">바로보기</a> 
+											<a href="/cmm/fms/fileDown.do?atchFileId=FILE_000000000771551&fileSn=1"
+												class="basic-btn01 btn-gray-bd icon_download" target="_blank" title="첨부파일 2026년 남해군 독일마을 맥주축제 관광객 유치 인센티브 지원 사업 공고(최종).hwpx 다운로드">다운로드</a>
+										</div>
+									</li>
+								
+							
+						</ul>
+					</div>
+					<div class="btn_area2">
+						<a href="javascript:void(0);" onclick="fn_scrap('PBLN_000000000126035');" class="basic-btn03 btn-sky-bg" title="스크랩">스크랩</a>
+						<a href="javascript:void(0);" onclick="fn_clip();" class="basic-btn03 btn-sky-bg" title="링크복사">링크복사</a>
+						<a href="javascript:void(0);" onclick="fn_qrPopup('2026년 남해군 독일마을 맥주축제ㆍ관광객 유치 인센티브 지원 사업 공고')" id="qrPopupBtn" title="QR팝업 레이어 팝업" class="basic-btn03 btn-sky-bg">QR코드</a>
+						<a href="https://www.namhae.go.kr/modules/saeol/gosi.do?amode=_view&amp;not_ancmt_mgt_no=36721&amp;pageCd=SM010110000&amp;siteGubun=socialm&amp;scd=01&amp;cpage=3" target="_blank" class="basic-btn03 btn-sky-bg" id="barogagi" title="출처 바로가기"> 출처 바로가기 </a>
+					</div>
+				</div>
+				
+				
+				<div class="satisfaction">
+					<h3 class="title">정보에 만족하셨나요?</h3>
+					<div class="ratings">
+						<span tabindex="0" id="tab_ratings_1">
+							<input type="radio" name="score" id="ratings_1" value="1" tabindex="-1">
+							<label for="ratings_1" tabindex="-1">1점</label>
+						</span>
+						<span tabindex="0" id="tab_ratings_2">
+							<input type="radio" name="score" id="ratings_2" value="2" tabindex="-1">
+							<label for="ratings_2" tabindex="-1">2점</label>
+						</span>
+						<span tabindex="0" id="tab_ratings_3">
+							<input type="radio" name="score" id="ratings_3" va
