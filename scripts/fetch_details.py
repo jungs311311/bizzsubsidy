@@ -19,7 +19,7 @@ OUT = Path(__file__).resolve().parent.parent / "data" / "details.json"
 KST = dt.timezone(dt.timedelta(hours=9))
 MAX_NEW = 1500        # 한 번에 새로 받을 공고문 수 (나머지는 다음 날)
 WORKERS = 6
-VERSION = 4           # 뽑는 규칙을 크게 바꾸면 올려서 전부 다시 읽게 함
+VERSION = 5           # 뽑는 규칙을 크게 바꾸면 올려서 전부 다시 읽게 함
 
 
 def pick_file(it):
