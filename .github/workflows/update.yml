@@ -2,11 +2,12 @@ name: 기업마당 공고 매일 갱신
 
 on:
   schedule:
-    - cron: "52 20 * * *"   # 매일 오전 5시 52분 (한국시간)
+    - cron: "52 20 * * *"   # 매일 오전 5시 52분 (한국시간). GitHub 사정으로 1~2시간 늦을 수 있음
   workflow_dispatch:         # Actions 탭에서 '지금 실행' 가능
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   update:
@@ -17,7 +18,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: 공고 가져오기
+      - name: 공고 가져오기 · 지원 38개 접수 상태 계산
         env:
           BIZINFO_KEY: ${{ secrets.BIZINFO_KEY }}
         run: python scripts/fetch_bizinfo.py
@@ -25,10 +26,15 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/notices.json
+          git add data/notices.json data/status.json data/seen.json
           if git diff --staged --quiet; then
             echo "바뀐 공고 없음"
           else
             git commit -m "공고 자동 갱신 $(TZ=Asia/Seoul date +%F)"
             git push
           fi
+      - name: 새 공고가 있으면 이슈로 알림
+        if: hashFiles('report.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh issue create --title "$(cat report_title.txt)" --body-file report.md

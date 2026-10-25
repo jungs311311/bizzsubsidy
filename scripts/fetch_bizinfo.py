@@ -113,10 +113,9 @@ def convert(item, today):
     if end and end < today:
         return None  # 이미 마감
     text = " ".join([title, target, " ".join(tags)])
-    if not any(k in text for k in KEEP):
-        return None
-    if target and any(k in target for k in ONLY_BIG) and not any(k in target for k in KEEP):
-        return None
+    # 사이트 '새 공고' 칸에 보여줄 소상공인·개인사업자용인지 (지원 짝짓기에는 전부 씀)
+    keep = any(k in text for k in KEEP) and not (
+        target and any(k in target for k in ONLY_BIG) and not any(k in target for k in KEEP))
 
     url = item.get("pblancUrl") or item.get("link") or ""
     if url.startswith("/"):
@@ -138,6 +137,7 @@ def convert(item, today):
         "tags": [t for t in tags if t not in REGIONS][:12],
         "created": clean(item.get("creatPnttm") or item.get("pubDate"))[:10],
         "forSmall": any(k in text for k in ("소상공인", "자영업", "개인사업자", "전통시장", "상인")),
+        "_keep": keep,
     }
 
 
@@ -168,7 +168,11 @@ def main():
         if row and row["id"] not in seen:
             seen.add(row["id"])
             items.append(row)
-    # 마감이 가까운 순, 상시 접수는 뒤로
+    # 38개 지원 접수 상태 계산 + 새 공고·새 사업 알림 (전체 접수 중 공고로)
+    import watch_programs
+    watch_programs.run(items, today)
+    # 사이트 '새 공고' 칸에는 소상공인·개인사업자용만, 마감이 가까운 순, 상시 접수는 뒤로
+    items = [{k: v for k, v in r.items() if k != "_keep"} for r in items if r["_keep"]]
     items.sort(key=lambda x: (x["end"] or "9999-12-31", x["title"]))
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
