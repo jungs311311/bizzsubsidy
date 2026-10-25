@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-25T19:35+09:00",
+ "updatedAt": "2026-10-25T19:41+09:00",
  "programs": {
   "소상공인 경영안정 바우처": {
    "kind": "notice",
@@ -857,6 +857,11 @@
   },
   "소상공인 창업 교육 (지식배움터)": {
    "kind": "law",
+   "national": [],
+   "local": []
+  },
+  "정규직 전환 지원금": {
+   "kind": "notice",
    "national": [],
    "local": []
   },
