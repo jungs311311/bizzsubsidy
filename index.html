@@ -932,11 +932,14 @@ function myFit(){
     leave:on("leave"),close:on("close"),credit:on("credit"),drop:on("drop"),debtTrouble:on("debtTrouble")};
 }
 let DETAIL=null;
+// '업체당·1인당·최대·한도'가 붙어 확실한 금액만 숫자로 씀 (옛 데이터처럼 표시가 없으면 확실한 것으로 봄)
+const sure=(D,k)=>D&&D[k]&&D[k+"Sure"]!==false?D[k]:0;
 function moneyLine(D){
   if(!D)return "";
   const a=[];
-  if(D.amt)a.push(`<b>최대 ${esc(D.amtText)}</b>`);
-  if(D.loan)a.push(`<b>대출 한도 ${esc(D.loanText)}</b>`);
+  if(sure(D,"amt"))a.push(`<b title="${esc("근거: "+(D.amtWhy||""))}">최대 ${esc(D.amtText)}</b>`);
+  if(sure(D,"loan"))a.push(`<b title="${esc("근거: "+(D.loanWhy||""))}">대출 한도 ${esc(D.loanText)}</b>`);
+  if((D.amt||D.loan)&&!sure(D,"amt")&&!sure(D,"loan"))a.push(`<i>금액은 공고문 확인</i>`);
   if(D.rateSub)a.push(`<i>이자 지원 ${D.rateSub}%p</i>`);else if(D.rate)a.push(`<i>금리 연 ${D.rate}%</i>`);
   if(D.ratio&&D.ratio<100)a.push(`<i>비용의 ${D.ratio}% 지원</i>`);
   if(D.countText)a.push(`<i>${esc(D.countText)} 선정</i>`);
@@ -947,8 +950,8 @@ function detailBox(D){
   if(!D)return "";
   const rows=[];
   if(D.target)rows.push(`<div><b>지원 대상</b> ${esc(D.target)}</div>`);
-  if(D.amtWhy)rows.push(`<div><b>금액 근거</b> ${esc(D.amtWhy)}</div>`);
-  if(D.loanWhy)rows.push(`<div><b>대출 근거</b> ${esc(D.loanWhy)}</div>`);
+  if(D.amtWhy&&sure(D,"amt"))rows.push(`<div><b>금액 근거</b> ${esc(D.amtWhy)}</div>`);
+  if(D.loanWhy&&sure(D,"loan"))rows.push(`<div><b>대출 근거</b> ${esc(D.loanWhy)}</div>`);
   if(D.rateWhy)rows.push(`<div><b>금리 근거</b> ${esc(D.rateWhy)}</div>`);
   if(D.excl&&D.excl.length)rows.push(`<div><b>제외 업종에 나온 말</b> ${esc(D.excl.join(", "))}</div>`);
   if(!rows.length)return "";
@@ -971,9 +974,9 @@ function renderNotices(){
     (!$("nsmall").checked||(pre?/예비/.test([it.title,it.target,(it.tags||[]).join(" ")].join(" ")):it.forSmall))&&
     (!$("nsoon").checked||(it.end&&it.end<=soonLimit))&&
     (!q||[it.title,it.org,it.target,it.summary,(it.tags||[]).join(" ")].join(" ").toLowerCase().includes(q))&&
-    (!onlyMoney||(it._d&&(it._d.amt||it._d.loan)))&&
+    (!onlyMoney||sure(it._d,"amt")||sure(it._d,"loan"))&&
     (!hideNo||it._fit.st!=="no"||(hidden++,false)));
-  const SK={amt:it=>-((it._d&&it._d.amt)||0),loan:it=>-((it._d&&it._d.loan)||0),new:it=>-(+new Date(it.created||0)||0),end:it=>it.end?+new Date(it.end):9e15};
+  const SK={amt:it=>-sure(it._d,"amt"),loan:it=>-sure(it._d,"loan"),new:it=>-(+new Date(it.created||0)||0),end:it=>it.end?+new Date(it.end):9e15};
   rows.sort((a,b)=>SK[sort](a)-SK[sort](b)||(SK.end(a)-SK.end(b)));
   $("nCount").hidden=false;$("nCount").textContent=`${rows.length}건`+(hidden?` · 안 맞는 ${hidden}건 숨김`:"");
   box.innerHTML=rows.length?rows.slice(0,nShown).map(it=>{const [cls,txt]=dday(it,today);const url=safeUrl(it.url);
