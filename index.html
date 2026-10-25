@@ -37,6 +37,11 @@ body{margin:0}
 .dday.soon{background:var(--warn);color:var(--paper);border-color:var(--warn)}
 .dday.open{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
+.ncard.fit-no{opacity:.72}
+.fit{display:flex;flex-wrap:wrap;gap:4px 10px;margin:0;padding:0;list-style:none;font-size:13px;line-height:1.45}
+.fit li{display:flex;gap:4px}
+.fit .ok{color:var(--accent)}.fit .chk{color:var(--warn)}.fit .no{color:var(--off)}
+.fit li span{font-family:var(--f-num);font-weight:700}
 .more{justify-self:start;font:inherit;font-weight:600;color:var(--accent);background:var(--paper);border:1px solid var(--accent);border-radius:8px;padding:8px 16px;cursor:pointer}
 .more:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
@@ -246,7 +251,9 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
           <input id="nq" type="search" placeholder="공고 검색 (예: 배달, 전기요금, 컨설팅)" aria-label="공고 검색">
           <label class="chk"><input type="checkbox" id="nsoon"> 2주 안에 마감</label>
           <label class="chk"><input type="checkbox" id="nsmall" checked> <span id="nsmallTxt">소상공인 대상만</span></label>
+          <label class="chk"><input type="checkbox" id="nfit" checked> 내 조건에 안 맞는 공고 숨기기</label>
         </div>
+        <p class="hint" style="margin:0">공고 제목과 대상의 단어로 내 업종·상황과 맞는지 자동으로 표시해요. ✓ 맞음 · ? 공고문 확인 · ✕ 안 맞음. 단어만 보는 거라 틀릴 수 있으니, 신청 전에는 공고문을 꼭 확인하세요.</p>
         <div class="list" id="nList"></div>
         <button type="button" class="more" id="nMore" hidden>더 보기</button>
       </section>
@@ -847,6 +854,71 @@ function dday(it,today){
   const d=Math.round((new Date(it.end)-new Date(today))/864e5);
   return [d<=14?"soon":"open",d===0?"오늘 마감":`D-${d}`];
 }
+// ---- 새 공고 단어 거르기: 공고 제목·대상·소개글의 단어로 내 조건과 맞는지 자동 판정 ----
+// 결과: ok(맞음) / chk(공고문 확인) / no(안 맞음). 공고문을 다 읽는 게 아니라 단어만 보므로 틀릴 수 있음.
+const FIT_RULES=[
+ // 업종이 정해진 공고
+ {re:/소공인|제조(업|기업|환경|마스터|업체)|섬유(분야|제조)|주얼리|가구(디자인|창작|지원센터)|공산품|기계장비/,
+  test:m=>m.k==="mfg"?["ok","제조업 대상"]:["no","제조업(소공인)만 대상"]},
+ {re:/음식점|외식업|먹거리골목|식품안심업소|위생등급|레시피/,
+  test:m=>m.k==="food"?["ok","음식점 대상"]:["no","음식점·외식업만 대상"]},
+ {re:/식품진흥기금|식품(제조|기업)/,
+  test:m=>["food","mfg"].includes(m.k)?["ok","식품 업종 대상"]:["no","식품 제조·음식점만 대상"]},
+ {re:/농업인|농업용|농가|어업(활동|인)|어업인|축산|가축분뇨|임업인/,
+  test:m=>m.k==="farm"?["ok","농림어업 대상"]:["no","농업·어업인만 대상"]},
+ {re:/여행업|관광사업체|여행사/,
+  test:m=>m.k==="biz"?["chk","여행업 등록 업체만"]:["no","여행업 등록 업체만 대상"]},
+ {re:/착한가격업소/,
+  test:m=>["food","svc"].includes(m.k)?["ok","외식·개인서비스 대상"]:["chk","외식·이미용·세탁 등 서비스업 위주, 가격 심사 있음"]},
+ {re:/프랜차이즈|가맹\s?(본부|사업자|소상공인)|가맹점주/,test:()=>["chk","프랜차이즈 가맹점만"]},
+ {re:/전통시장|상점가|상인회|골목상점|상권 활성화|원도심/,test:()=>["chk","전통시장·상점가 안 점포만일 수 있음"]},
+ {re:/수출|해외(상표|바이어)/,test:()=>["chk","수출하거나 해외 판매할 제품이 있어야 함"]},
+ {re:/입점|기획전|특판|홈쇼핑|판로|라이브커머스|팝업스토어|박람회|면세장|동반성장몰|크라우드펀딩|소담스퀘어|디지털커머스/,
+  test:()=>["chk","판매할 제품이 있는 업체 대상"]},
+ {re:/생활화학제품|어린이제품|생활용품/,test:m=>["mfg","retail"].includes(m.k)?["chk","해당 제품을 만들거나 파는 업체만"]:["no","생활용품 제조·판매 업체만 대상"]},
+ {re:/\(법인사업자\)|법인사업자 전용/,test:()=>["chk","법인사업자만 (개인사업자는 별도 공고)"]},
+ // 대표자·사업장 상황
+ {re:/청년\s?(소상공인|창업|사업가|창업가|CEO|사장|기업)/,test:m=>m.youth?["ok","청년 대표 대상"]:["no","청년(만 39세 이하) 대표만"]},
+ {re:/청년\s?(일자리|일경험|채용|고용)|미취업청년/,test:m=>m.hireYouth?["ok","청년 채용 시 지원"]:["chk","청년을 채용할 때만"]},
+ {re:/여성\s?(기업|농업인|창업|CEO|대표)/,test:m=>m.woman?["ok","여성 대표 대상"]:["no","여성 대표만"]},
+ {re:/장애인\s?(기업|창업|대표|소상공인)/,test:m=>m.disabled?["ok","장애인 대표 대상"]:["no","장애인 대표만"]},
+ {re:/중장년/,test:()=>["chk","중장년(대개 40~64세) 대표만"]},
+ {re:/1인\s?(자영업자|소상공인|점포|사업자)/,test:m=>m.emp===0?["ok","1인 사업장 대상"]:["no","직원 없는 1인 사업장만"]},
+ {re:/폐업|사업정리|재기|희망리턴|새출발|휴ㆍ폐업|재창업/,test:m=>m.close?["ok","폐업·재기 지원"]:["no","폐업·재기 상황만"]},
+ {re:/저신용/,test:m=>m.credit?["chk","저신용만 (보통 744점 이하)"]:["no","저신용 소상공인만"]},
+ {re:/위기 소상공인|경영위기/,test:m=>m.drop||m.debtTrouble?["ok","경영 위기 대상"]:["chk","매출 감소·연체 등 경영 위기만"]},
+ {re:/육아휴직|대체인력/,test:m=>m.leave?["ok","육아휴직 대상"]:["no","직원이 육아휴직을 쓸 때만"]},
+ {re:/출산|양육|아이보듬/,test:()=>["chk","대표(또는 배우자)가 출산했을 때만"]},
+ {re:/신규\s?채용|인건비|일자리\s?창출|고용창출/,test:m=>m.hire||m.staffUp?["ok","직원 채용 시 지원"]:["chk","직원을 새로 뽑을 때만"]},
+ {re:/인구감소지역/,test:()=>["chk","인구감소지역 사업장만"]},
+ {re:/이주직원|이전기업/,test:()=>["no","특정 이주·이전 대상자만"]},
+ {re:/생애\s?(첫|최초)\s?창업|최초 창업|창업\s?(임대료|응원금|지원금)|창업의 꿈|청년창업|창업 초기/,
+  test:m=>m.yrs<=0?["ok","창업 초기 대상"]:m.yrs===1?["chk","창업 초기만 (보통 1~3년 이내)"]:["no","창업한 지 얼마 안 된 사업장만"]},
+];
+// 정책자금·바우처 제외 업종(약국 등)이면 소진공 정책자금 공고는 안 됨
+const FIT_POLICY=/소상공인 정책자금|소상공인시장진흥(공단 )?정책자금|경영안정 바우처|소상공인시장진흥자금/;
+const FIT_LOCALFUND=/정책자금|육성자금|경영안정자금|특례보증|이차보전|이자(차액|지원|비용)|융자/;
+function fitNotice(it,m){
+  // 제목·대상 칸만 봄. 소개글은 여러 트랙을 한꺼번에 적는 경우가 많아 오히려 틀리기 쉬움
+  const head=[it.title,it.target].join(" ");
+  const why=[];const seen=new Set();
+  const add=v=>{if(!seen.has(v[1])){seen.add(v[1]);why.push(v)}};
+  for(const r of FIT_RULES)if(r.re.test(head))add(r.test(m));
+  if(m.x){
+    if(FIT_POLICY.test(head))add(["no",`${m.xn}은(는) 소진공 정책자금·바우처 제외 업종`]);
+    else if(FIT_LOCALFUND.test(head))add(["chk",`${m.xn}이(가) 제외 업종인지 공고문 확인`]);
+  }
+  const st=why.some(w=>w[0]==="no")?"no":why.some(w=>w[0]==="chk")?"chk":"ok";
+  if(!why.length)why.push(["ok","업종·대상 제한 단어 없음"]);
+  return {st,why};
+}
+function myFit(){
+  const d=IND[+$("ind").value],u=SUB[d.k][+$("sub").value]||SUB[d.k][0];
+  const on=id=>!!($(id)&&$(id).checked);
+  return {k:d.k,c:u.c,x:u.x&&u.x!==""?u.x:"",xn:u.x?u.n.split(",")[0]:"",emp:Math.max(0,Math.floor(+$("emp").value||0)),yrs:+$("yrs").value,
+    youth:on("youth"),woman:on("woman"),disabled:on("disabled"),hire:on("hire"),hireYouth:on("hireYouth"),staffUp:on("staffUp"),
+    leave:on("leave"),close:on("close"),credit:on("credit"),drop:on("drop"),debtTrouble:on("debtTrouble")};
+}
 function renderNotices(){
   const box=$("nList"),upd=$("nUpd");
   if(!NOTICE){return}
@@ -857,22 +929,28 @@ function renderNotices(){
   const region=$("region").value,q=$("nq").value.trim().toLowerCase(),pre=$("yrs").value==="-1";
   $("nsmallTxt").textContent=pre?"예비창업자 대상만":"소상공인 대상만";
   NOTICE.items.forEach(it=>{if(it.regions.length>=10)it.regions=[]}); // 17개 시·도가 다 붙은 옛 데이터는 전국으로
+  const me=myFit(),hideNo=$("nfit").checked;let hidden=0;
+  NOTICE.items.forEach(it=>{it._fit=fitNotice(it,me)});
   const rows=NOTICE.items.filter(it=>
     (!region||!it.regions.length||it.regions.includes(region))&&
     (!$("nsmall").checked||(pre?/예비/.test([it.title,it.target,(it.tags||[]).join(" ")].join(" ")):it.forSmall))&&
     (!$("nsoon").checked||(it.end&&it.end<=soonLimit))&&
-    (!q||[it.title,it.org,it.target,it.summary,(it.tags||[]).join(" ")].join(" ").toLowerCase().includes(q)));
-  $("nCount").hidden=false;$("nCount").textContent=`${rows.length}건`;
+    (!q||[it.title,it.org,it.target,it.summary,(it.tags||[]).join(" ")].join(" ").toLowerCase().includes(q))&&
+    (!hideNo||it._fit.st!=="no"||(hidden++,false)));
+  $("nCount").hidden=false;$("nCount").textContent=`${rows.length}건`+(hidden?` · 안 맞는 ${hidden}건 숨김`:"");
   box.innerHTML=rows.length?rows.slice(0,nShown).map(it=>{const [cls,txt]=dday(it,today);const url=safeUrl(it.url);
-    return `<article class="ncard">
+    const F=it._fit,MK={ok:"✓",chk:"?",no:"✕"};
+    return `<article class="ncard fit-${F.st}">
       <div class="card-top"><h3>${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(it.title)}</a>`:esc(it.title)}</h3><span class="dday ${cls}">${txt}</span></div>
       <div class="meta">${[it.org,it.execOrg!==it.org?it.execOrg:"",it.period].filter(Boolean).map(esc).join(" · ")}</div>
+      <ul class="fit">${F.why.map(w=>`<li class="${w[0]}"><span>${MK[w[0]]}</span>${esc(w[1])}</li>`).join("")}</ul>
       ${it.summary?`<p class="why">${esc(it.summary)}</p>`:""}
       <div class="chips">${(it.regions.length?it.regions:["전국"]).map(r=>`<span class="cat">${esc(r)}</span>`).join("")}${it.field?`<span class="cat">${esc(it.field)}</span>`:""}${it.target?`<span class="cat">대상: ${esc(it.target)}</span>`:""}</div>
     </article>`}).join(""):`<p class="empty">조건에 맞는 공고가 없어요. 검색어나 지역을 바꿔 보세요.</p>`;
   $("nMore").hidden=rows.length<=nShown;
 }
-["region","yrs","nq","nsoon","nsmall"].forEach(id=>$(id).addEventListener("input",()=>{nShown=20;renderNotices()}));
+["nq","nsoon","nsmall","nfit"].forEach(id=>$(id).addEventListener("input",()=>{nShown=20;renderNotices()}));
+["input","change"].forEach(ev=>$("f").addEventListener(ev,()=>{nShown=20;renderNotices()}));
 $("nMore").addEventListener("click",()=>{nShown+=20;renderNotices()});
 fetch("data/status.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){STATUS=d;render()}}).catch(()=>{});
 fetch("data/notices.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{NOTICE=d;renderNotices()})
