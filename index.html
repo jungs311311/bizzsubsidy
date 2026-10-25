@@ -29,6 +29,8 @@ body{margin:0}
 .nbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .nbar input[type=search]{flex:1 1 220px;min-width:0;font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:9px 12px}
 .nbar .chk{padding:7px 10px;font-size:13.5px}
+.nreg{display:flex;align-items:center;gap:6px;flex:0 0 100%;font-size:14px;font-weight:600}
+.nreg select{flex:0 1 220px;min-width:0}
 .ncard{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:6px;min-width:0}
 .ncard h3{font-size:15.5px;margin:0;line-height:1.45}
 .ncard h3 a{color:var(--ink);text-decoration:none}
@@ -255,6 +257,7 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
         <div class="tally"><h2>기업마당 새 공고</h2><span class="pill check" id="nCount"></span></div>
         <p class="hint" id="nUpd" style="margin:0"></p>
         <div class="nbar">
+          <label class="nreg"><span>지역</span><select id="nregion" class="nsort" aria-label="공고 지역"></select></label>
           <input id="nq" type="search" placeholder="공고 검색 (예: 배달, 전기요금, 컨설팅)" aria-label="공고 검색">
           <label class="chk"><input type="checkbox" id="nsoon"> 2주 안에 마감</label>
           <label class="chk"><input type="checkbox" id="nsmall" checked> <span id="nsmallTxt">소상공인 대상만</span></label>
@@ -277,7 +280,7 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
         <div>정확한 규모 판정은 <a href="https://sminfo.mss.go.kr" target="_blank" rel="noopener">중소기업현황정보시스템</a>에서 중소기업(소상공인)확인서를 발급받으면 확정됩니다. 대부분 지원사업이 이 확인서를 요구해요.</div>
         <div>내 업종이 제외 대상인지 헷갈리면 사업자등록증의 업종코드를 위 표와 맞춰 보거나 중소기업통합콜센터(1357)에 물어보세요.</div>
         <div>지자체 자체 지원(임대료, 시설 개보수, 노란우산 희망장려금 등)은 <a href="https://www.bizinfo.go.kr" target="_blank" rel="noopener">기업마당</a>과 <a href="https://www.sbiz24.kr" target="_blank" rel="noopener">소상공인24</a>에서 지역으로 검색하면 나옵니다.</div>
-        <div>금액·조건은 2026년 공개 자료를 정리한 것이며 공고마다 바뀔 수 있습니다.</div>
+        <div>금액·조건은 2026년 공개 자료를 정리한 것이며 공고마다 바뀔 수 있습니다. <span id="sheetNote"></span></div>
       </div>
     </section>
   </div>
@@ -448,6 +451,7 @@ const IR={ // 1단계 업종 (각 지원의 공고·법령에 적힌 제외 업�
  hope:(u,s)=>{ // 희망리턴: 공고에 '지원제외 업종'이 있다고만 공개, 목록은 첨부 문서에만 있음
   if(VICE.has(u.x))return ["no","유흥·사행 업종은 희망리턴패키지 지원 제외"];
   return u.x?["chk","희망리턴 제외 업종 목록은 공고 첨부 문서에만 있어 확인하지 못했어요. 소상공인24 콜센터(1533-0100)에 업종 문의"]:["ok","제외 업종 아님"]},
+ sheet:u=>u.x?["chk",`${u.n}은(는) 정책자금 제외 업종이에요. 이 지원도 제외되는지 공고문에서 확인`]:["chk","새로 추가된 지원이라 제외 업종은 공고문에서 확인"],
  unknown:u=>u.x?["chk","이 공고에는 제외 업종이 따로 적혀 있지 않아요. 소진공 사업이라 정책자금 제외 업종이 적용될 수 있으니 1357에 업종 문의"]:["ok","제외 업종 아님"],
  dojak:u=>{ // 소상공인 도약 지원(강한소상공인) 공고 참고3
   if(!u.x)return ["ok","제외 업종 아님"];
@@ -492,7 +496,7 @@ const IR={ // 1단계 업종 (각 지원의 공고·법령에 적힌 제외 업�
  none:()=>["ok","업종 제한 없음"]
 };
 // 성실신고확인대상 수입금액 기준(만원): 도소매·농림어업 15억, 제조·음식숙박·운수·정보통신·금융·건설 7.5억, 그 밖의 서비스 5억
-const SINCERE=k=>["retail","farm"].includes(k)?150000:["mfg","food","trans","it","fin","build"].includes(k)?75000:50000;
+const SINCERE=k=>["retail","farm"].includes(k)?K.sincereA:["mfg","food","trans","it","fin","build"].includes(k)?K.sincereB:K.sincereC;
 // 유흥·사행·향락 계열 제외 업종
 const VICE=new Set(["bar","dance","casino","adultgame","kiss","massage","gambledev","gamesw"]);
 // 창업중소기업 세액감면(조세특례제한법 제6조) 업종 판정
@@ -572,13 +576,19 @@ function taxOf(k,u){
   }
   return part("감면 업종 목록 확인이 필요해요");
 }
+// 판정 기준 숫자. 구글 시트 '사업체 보조금 조건표'의 기준값 탭(data/sheet.json)이 있으면 그 값으로 바뀜
+const K={voucherRev:10400,duruEmp:10,duruPay:270,youthMinEmp:5,youthRevPer:1900,leaveBig:30,cardRev:100000,
+ sincereA:150000,sincereB:75000,sincereC:50000,deemedRev:40000,
+ empTaxMetro:850,empTaxMetroYouth:1450,empTaxLocal:950,empTaxLocalYouth:1550,
+ taxSmallCash:10,taxSmallMetro:20,taxSmallLocal:30,taxMidCashMetro:0,taxMidCashLocal:5,taxMidKnowMetro:10,taxMidKnowLocal:15,taxMidMetro:0,taxMidLocal:15,
+ creditScore:839,refiScore:919,refiRate:7,dropPct:10};
 const METRO=["서울","인천","경기"];
 function taxRate(s,t,metro){ // 감면율(%)
   const cash=t==="retail"||t==="clinic"; // 도소매·의료업
-  if(s.small)return cash?10:(metro?20:30);
-  if(cash)return metro?0:5;
-  if(t==="know")return metro?10:15;
-  return metro?0:15;
+  if(s.small)return cash?K.taxSmallCash:(metro?K.taxSmallMetro:K.taxSmallLocal);
+  if(cash)return metro?K.taxMidCashMetro:K.taxMidCashLocal;
+  if(t==="know")return metro?K.taxMidKnowMetro:K.taxMidKnowLocal;
+  return metro?K.taxMidMetro:K.taxMidLocal;
 }
 function taxRates(s){ // [감면율] 또는 지역을 모르면 [수도권, 그 외]
   const x=taxOf(s.d.k,s.u);
@@ -614,7 +624,7 @@ const won=m=>{m=Math.max(0,Math.round(m||0));const e=Math.floor(m/10000),r=m%100
 // 지원사업: ind=업종 규칙, size=규모 규칙, sit=체크해야 하는 상황, cond=그 밖의 조건, pre=1 예비창업자 전용·2 둘 다, when=접수 시기
 const P=[
  {name:"소상공인 경영안정 바우처",org:"중소벤처기업부",cat:"받는 돈",amt:"사업장당 25만원",ind:"pf",size:"ss",when:"2026년 12월 18일까지 신청",
-  cond:s=>s.rev>=10400?["no",`연매출 1억 400만원 미만만 대상 (입력 ${won(s.rev)})`]:s.yrs===0?["chk","2025년 12월 31일 이전에 개업했는지"]:["ok","연매출 1억 400만원 미만"],
+  cond:s=>s.rev>=K.voucherRev?["no",`연매출 ${won(K.voucherRev)} 미만만 대상 (입력 ${won(s.rev)})`]:s.yrs===0?["chk","2025년 12월 31일 이전에 개업했는지"]:["ok",`연매출 ${won(K.voucherRev)} 미만`],
   about:"전기·가스요금, 4대보험료, 연료비 등에 쓰는 카드 포인트로 지급돼요.",
   url:"https://voucher.sbiz24.kr"},
  {name:"자영업자 고용보험료 지원",org:"소상공인시장진흥공단",cat:"줄이는 돈",amt:"보험료 50~80% 환급, 최대 5년",ind:"ei",size:"ss",
@@ -622,13 +632,13 @@ const P=[
   about:"직원 없는 1인 소상공인이 낸 고용보험료를 돌려받아요. 폐업하면 실업급여도 받을 수 있어요.",
   url:"https://www.sbiz24.kr"},
  {name:"두루누리 사회보험료 지원",org:"고용노동부·근로복지공단",cat:"줄이는 돈",amt:"국민연금·고용보험 80%, 최대 36개월",ind:"duru",size:"any",
-  cond:s=>s.emp>=10?["no","근로자 10인 미만 사업장만 대상"]:s.hire?["ok","새로 뽑은 직원 있음"]:s.emp===0?["no","고용한 직원이 없음 (직원을 새로 뽑으면 대상)"]:["chk","새로 뽑은 직원이 월보수 270만원 미만이고 최근 6개월 사회보험 가입 이력이 없는지"],
+  cond:s=>s.emp>=K.duruEmp?["no",`근로자 ${K.duruEmp}인 미만 사업장만 대상`]:s.hire?["ok","새로 뽑은 직원 있음"]:s.emp===0?["no","고용한 직원이 없음 (직원을 새로 뽑으면 대상)"]:["chk",`새로 뽑은 직원이 월보수 ${K.duruPay}만원 미만이고 최근 6개월 사회보험 가입 이력이 없는지`],
   about:"10인 미만 사업장이 월보수 270만원 미만 신규 근로자를 가입시키면 사업주·근로자 부담분을 함께 지원해요.",
   url:"https://www.4insure.or.kr"},
  {name:"청년일자리도약장려금",org:"고용노동부",cat:"받는 돈",amt:"청년 1인당 연 최대 720만원",ind:"consume",size:"sme",sit:"hireYouth",when:"2026년 예산 소진 시까지",
   cond:s=>{
-    if(s.emp<5)return ["it","pro","art"].includes(s.d.k)?["chk","5인 미만은 지식서비스·문화콘텐츠 업종이면 참여 가능 (해당 업종인지)"]:["no",`고용보험 피보험자 5인 이상 사업장만 참여 가능 (직원 ${s.emp}명)`];
-    return s.rev>=s.emp*1900?["ok","피보험자 5인 이상, 매출 요건 충족"]:["no",`연매출이 직원 수 × 1,900만원(${won(s.emp*1900)}) 이상이어야 해요`]},
+    if(s.emp<K.youthMinEmp)return ["it","pro","art"].includes(s.d.k)?["chk",`${K.youthMinEmp}인 미만은 지식서비스·문화콘텐츠 업종이면 참여 가능 (해당 업종인지)`]:["no",`고용보험 피보험자 ${K.youthMinEmp}인 이상 사업장만 참여 가능 (직원 ${s.emp}명)`];
+    return s.rev>=s.emp*K.youthRevPer?["ok",`피보험자 ${K.youthMinEmp}인 이상, 매출 요건 충족`]:["no",`연매출이 직원 수 × ${K.youthRevPer.toLocaleString()}만원(${won(s.emp*K.youthRevPer)}) 이상이어야 해요`]},
   about:"만 15~34세 청년을 정규직(주 28시간 이상)으로 뽑아 6개월 넘게 고용하면 지원해요. 채용 전에 고용24에서 참여 신청을 먼저 해야 해요. 비수도권은 청년에게 근속 인센티브가 따로 있어요.",
   url:"https://www.work24.go.kr"},
  {name:"고용촉진장려금",org:"고용노동부",cat:"받는 돈",amt:"1인당 연 최대 720만원 (월 60만원)",ind:"consume",size:"any",sit:"hireVuln",
@@ -636,11 +646,11 @@ const P=[
   about:"취업취약계층을 정규직으로 채용해 6개월 넘게 고용하면 6개월 단위로 지원해요. 채용 전후로 다른 직원을 내보내면 지원이 제한돼요.",
   url:"https://www.work24.go.kr"},
  {name:"육아휴직 대체인력·업무분담 지원금",org:"고용노동부",cat:"받는 돈",amt:"대체인력 월 최대 140만원 · 업무분담 월 최대 60만원",ind:"none",size:"any",sit:"leave",
-  cond:s=>s.emp===0?["no","고용한 직원이 없어요"]:s.emp>=30?["ok","30인 이상은 대체인력 월 130만원 · 업무분담 월 40만원"]:["ok","30인 미만 기준 금액"],
+  cond:s=>s.emp===0?["no","고용한 직원이 없어요"]:s.emp>=K.leaveBig?["ok",`${K.leaveBig}인 이상은 대체인력 월 130만원 · 업무분담 월 40만원`]:["ok",`${K.leaveBig}인 미만 기준 금액`],
   about:"직원이 육아휴직이나 육아기 근로시간 단축을 쓸 때 대체인력을 뽑거나 동료가 업무를 나누면 지원해요. 30인 미만은 육아휴직 사업주 지원금 월 30만원도 함께 받을 수 있어요.",
   url:"https://www.work24.go.kr"},
  {name:"통합고용세액공제",org:"국세청",cat:"줄이는 돈",ind:"empTax",size:"sme",sit:"staffUp",
-  amt:s=>!s.region?"늘어난 직원 1인당 연 850만~1,550만원 · 3년간":METRO.includes(s.region)?"늘어난 직원 1인당 연 850만원 (청년 등 1,450만원) · 3년간":"늘어난 직원 1인당 연 950만원 (청년 등 1,550만원) · 3년간",
+  amt:s=>{const f=n=>n.toLocaleString()+"만";return !s.region?`늘어난 직원 1인당 연 ${f(Math.min(K.empTaxMetro,K.empTaxLocal))}~${f(Math.max(K.empTaxMetroYouth,K.empTaxLocalYouth))}원 · 3년간`:METRO.includes(s.region)?`늘어난 직원 1인당 연 ${f(K.empTaxMetro)}원 (청년 등 ${f(K.empTaxMetroYouth)}원) · 3년간`:`늘어난 직원 1인당 연 ${f(K.empTaxLocal)}원 (청년 등 ${f(K.empTaxLocalYouth)}원) · 3년간`},
   about:"전년보다 상시근로자가 늘면 늘어난 인원만큼 소득세(법인세)를 3년간 공제해요. 청년·장애인·60세 이상·경력단절자는 더 많이 공제돼요. 공제 후 2년 안에 직원 수가 줄면 공제액을 돌려내야 해요. 2025년 이후 창업해 창업중소기업 감면을 받으면 같이 받을 수 없어요.",
   url:"https://www.hometax.go.kr"},
  {name:"중소기업 특별세액감면",org:"국세청",cat:"줄이는 돈",ind:"tax",size:"sme",
@@ -657,12 +667,12 @@ const P=[
   about:"청년(만 34세 이하) 창업이나 수입금액 1억 400만원 이하면 수도권 밖 100%, 수도권 75%, 과밀억제권역 50% 감면돼요(2026년 이후 창업 기준). 그 밖의 창업은 수도권 밖 50%, 수도권 25%예요.",
   url:"https://www.hometax.go.kr"},
  {name:"신용카드 매출전표 발행세액공제",org:"국세청",cat:"줄이는 돈",amt:"카드·현금영수증 과세 매출의 1.3% · 연 최대 1,000만원",ind:"none",size:"any",when:"2026년 말까지 (2027년부터 1.2%·500만원으로 줄어들 예정)",
-  cond:s=>s.rev>100000?["no","직전 연도 공급가액 10억원 이하 개인사업자만 대상"]:["ok","공급가액 10억원 이하"],
+  cond:s=>s.rev>K.cardRev?["no",`직전 연도 공급가액 ${won(K.cardRev)} 이하 개인사업자만 대상`]:["ok",`공급가액 ${won(K.cardRev)} 이하`],
   about:"부가세 신고 때 카드·현금영수증 매출의 1.3%를 부가세에서 빼줘요. 개인사업자만 해당하고 법인은 제외예요. 약국은 처방조제(면세) 매출은 빠지고 일반약·건강기능식품·화장품 같은 과세 매출만 대상이에요.",
   url:"https://www.hometax.go.kr"},
  {name:"의제매입세액공제",org:"국세청",cat:"줄이는 돈",ind:"deemed",size:"any",
   amt:s=>{const c=s.u.c||"";if(/^5621[12]$/.test(c))return "면세 농산물 등 구입액의 2/102";
-    if(s.d.k==="food")return s.rev<=40000?"면세 농산물 등 구입액의 9/109 (매출 4억 이하)":"면세 농산물 등 구입액의 8/108";
+    if(s.d.k==="food")return s.rev<=K.deemedRev?`면세 농산물 등 구입액의 9/109 (매출 ${won(K.deemedRev)} 이하)`:"면세 농산물 등 구입액의 8/108";
     return "면세 원재료 구입액의 일정 비율"},
   about:"쌀·채소·고기·수산물처럼 부가세가 없는 재료를 사도 일정 비율만큼 부가세에서 빼줘요. 매출 4억원 이하 개인 음식점의 9/109 우대율은 2028년까지 연장될 예정이에요.",
   url:"https://www.hometax.go.kr"},
@@ -710,7 +720,7 @@ const P=[
   about:"NICE 839점 이하 중·저신용 소상공인 직접대출. 1년 뒤 신용점수가 70점 넘게 오르거나 840점 이상이 되면 금리 0.5%p 인하를 신청할 수 있어요.",
   url:"https://ols.sbiz.or.kr"},
  {name:"소상공인 대환대출",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 5,000만원 · 연 4.5% 고정 · 최대 10년",ind:"pf",size:"ss",sit:"hiloan",
-  cond:s=>s.credit?["chk","갈아탈 대출이 2025년 6월 30일 이전에 받은 것인지"]:["chk","NICE 신용점수가 919점 이하인지, 갈아탈 대출이 2025년 6월 30일 이전에 받은 것인지"],
+  cond:s=>s.credit?["chk","갈아탈 대출이 2025년 6월 30일 이전에 받은 것인지"]:["chk",`NICE 신용점수가 ${K.refiScore}점 이하인지, 갈아탈 대출이 2025년 6월 30일 이전에 받은 것인지`],
   about:"2025년 6월 30일 이전에 받은 연 7% 이상 사업자 대출(사업용 가계대출 포함)을 연 4.5% 고정금리로 갈아타는 대출이에요. NICE 919점 이하 중·저신용 소상공인 대상.",
   url:"https://ols.sbiz.or.kr"},
  {name:"긴급경영안정자금 (재해 피해)",org:"소상공인시장진흥공단",cat:"빌리는 돈",amt:"최대 1억원 · 연 2.0% 고정",ind:"disaster",size:"ss",sit:"disaster",
@@ -766,7 +776,8 @@ const P=[
 function judge(p,s){
   if(p.pre===1&&!s.pre)return {g:"no",stage:"대상",why:"사업자등록 전 예비창업자만 대상"};
   if(!p.pre&&s.pre)return {g:"no",stage:"대상",why:"사업자등록을 해야 신청할 수 있어요"};
-  const steps=[["업종",IR[p.ind](s.u,s)],["규모",s.pre?["na","예비창업자"]:SR[p.size](s)],["조건",p.cond?p.cond(s):OK]];
+  const cr=p.cond?p.cond(s):OK; // 시트의 '추가 확인 조건'은 확인할 항목으로 덧붙임
+  const steps=[["업종",IR[p.ind](s.u,s)],["규모",s.pre?["na","예비창업자"]:SR[p.size](s)],["조건",p.extra&&cr[0]!=="no"?["chk",cr[0]==="chk"?`${cr[1]} · ${p.extra}`:p.extra]:cr]];
   const bad=steps.find(([,r])=>r[0]==="no");
   if(bad)return {g:"no",stage:bad[0],why:bad[1][1],steps};
   if(p.sit&&!s[p.sit])return {g:"sit",why:`'${SIT[p.sit]}'에 체크하면 판정해요`,steps};
@@ -810,7 +821,7 @@ function render(){
   document.querySelectorAll("#exTbody tr").forEach(tr=>tr.classList.toggle("hl",!!s.ex&&tr.dataset.id===s.ex.id));
 
   // 지원 판정: 모든 지원을 네 묶음 중 하나로
-  const J=P.map(p=>({p,...judge(p,s)}));
+  const J=P.filter(p=>!p.hide).map(p=>({p,...judge(p,s)}));
   const grp=g=>J.filter(x=>x.g===g);
   // 매일 아침 기업마당 공고로 계산한 접수 상태 (data/status.json). 없으면 적어 둔 접수 시기를 씀
   const LIVE=p=>{const st=STATUS&&STATUS.programs&&STATUS.programs[p.name];if(!st)return null;
@@ -957,6 +968,7 @@ function detailBox(D){
   if(!rows.length)return "";
   return `<details class="dt"><summary>공고문에서 뽑은 내용 (${D.src==="공고문"?"공고문 자동 분석":"소개글만 분석"})</summary>${rows.join("")}<div>자동으로 뽑은 내용이라 틀릴 수 있어요. 신청 전 공고문을 확인하세요.</div></details>`;
 }
+const rtitle=it=>!/^\s*\[/.test(it.title)&&it.regions.length&&it.regions.length<=3?`[${it.regions.join("·")}] ${it.title}`:it.title;
 function renderNotices(){
   const box=$("nList"),upd=$("nUpd");
   if(!NOTICE){return}
@@ -965,6 +977,7 @@ function renderNotices(){
   const today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
   const soonLimit=new Date(Date.now()+(9*3600e3)+14*864e5).toISOString().slice(0,10);
   const region=$("region").value,q=$("nq").value.trim().toLowerCase(),pre=$("yrs").value==="-1";
+  $("nregion").value=region;
   $("nsmallTxt").textContent=pre?"예비창업자 대상만":"소상공인 대상만";
   NOTICE.items.forEach(it=>{if(it.regions.length>=10)it.regions=[]}); // 17개 시·도가 다 붙은 옛 데이터는 전국으로
   const me=myFit(),hideNo=$("nfit").checked,onlyMoney=$("nmoney").checked,sort=$("nsort").value;let hidden=0;
@@ -982,7 +995,7 @@ function renderNotices(){
   box.innerHTML=rows.length?rows.slice(0,nShown).map(it=>{const [cls,txt]=dday(it,today);const url=safeUrl(it.url);
     const F=it._fit,MK={ok:"✓",chk:"?",no:"✕"};
     return `<article class="ncard fit-${F.st}">
-      <div class="card-top"><h3>${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(it.title)}</a>`:esc(it.title)}</h3><span class="dday ${cls}">${txt}</span></div>
+      <div class="card-top"><h3>${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(rtitle(it))}</a>`:esc(rtitle(it))}</h3><span class="dday ${cls}">${txt}</span></div>
       <div class="meta">${[it.org,it.execOrg!==it.org?it.execOrg:"",it.period].filter(Boolean).map(esc).join(" · ")}</div>
       ${moneyLine(it._d)}
       <ul class="fit">${F.why.map(w=>`<li class="${w[0]}"><span>${MK[w[0]]}</span>${esc(w[1])}</li>`).join("")}</ul>
@@ -992,9 +1005,30 @@ function renderNotices(){
     </article>`}).join(""):`<p class="empty">조건에 맞는 공고가 없어요. 검색어나 지역을 바꿔 보세요.</p>`;
   $("nMore").hidden=rows.length<=nShown;
 }
+$("nregion").innerHTML=$("region").innerHTML;$("nregion").options[0].textContent="전체 지역";
+$("nregion").addEventListener("input",()=>{$("region").value=$("nregion").value;nShown=20;render();renderNotices()});
 ["nq","nsoon","nsmall","nfit","nmoney","nsort"].forEach(id=>$(id).addEventListener("input",()=>{nShown=20;renderNotices()}));
 ["input","change"].forEach(ev=>$("f").addEventListener(ev,()=>{nShown=20;renderNotices()}));
 $("nMore").addEventListener("click",()=>{nShown+=20;renderNotices()});
+// 구글 시트 조건표 (매일 아침 GitHub이 data/sheet.json으로 저장). 없거나 못 읽으면 위에 적힌 기본값 그대로
+const SIZES={ss:1,small:1,sme:1,any:1,kosmes:1};
+function applySheet(S){
+  for(const [c,v] of Object.entries(S.k||{}))if(c in K&&typeof v==="number")K[c]=v;
+  (S.ind||[]).forEach(r=>{const d=IND.find(x=>x.k===r.k);if(!d)return;
+    d.small=r.small;d.mid=r.mid;d.ss=r.ss;if(r.n)d.n=r.n;d.note=r.note||undefined});
+  (S.programs||[]).forEach(r=>{
+    let p=P.find(x=>x.name===r.name);
+    if(!p){if(!r.amt||!r.about)return;p={name:r.name,ind:"sheet",size:"any",cat:"받는 돈"};P.push(p)}
+    if(r.org)p.org=r.org;if(r.cat)p.cat=r.cat;if(r.size&&SIZES[r.size])p.size=r.size;
+    p.tag=r.tag||undefined;p.when=r.when||undefined;p.extra=r.extra||undefined;p.hide=r.show==="N";
+    if(r.amt&&!/^\(자동/.test(r.amt))p.amt=r.amt;if(r.about)p.about=r.about;if(r.url)p.url=r.url});
+  // 숫자가 들어간 화면 문구 다시 쓰기
+  SIT.credit=`신용점수(NICE)가 ${K.creditScore}점 이하`;SIT.hiloan=`연 ${K.refiRate}% 이상 고금리 사업자 대출이 있음`;SIT.drop=`매출이 전년보다 ${K.dropPct}% 이상 줄었음`;
+  ["credit","hiloan","drop"].forEach(id=>{const l=$(id).parentNode;l.lastChild.textContent=" "+SIT[id]});
+  [...$("ind").options].forEach((o,i)=>o.textContent=IND[i].n);
+  const n=$("sheetNote");if(n)n.innerHTML=`판정 기준값은 <a href="${S.source}" target="_blank" rel="noopener">사업체 보조금 조건표</a>(${S.updatedAt} 반영)를 따릅니다.`;
+}
+fetch("data/sheet.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){applySheet(d);render()}}).catch(()=>{});
 fetch("data/status.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){STATUS=d;render()}}).catch(()=>{});
 fetch("data/details.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){DETAIL=d.items;renderNotices()}}).catch(()=>{});
 fetch("data/notices.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{NOTICE=d;renderNotices()})

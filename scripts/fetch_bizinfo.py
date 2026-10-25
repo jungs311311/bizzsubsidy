@@ -117,6 +117,10 @@ def convert(item, today):
     keep = any(k in text for k in KEEP) and not (
         target and any(k in target for k in ONLY_BIG) and not any(k in target for k in KEEP))
 
+    regions = regions_of(item, tags)
+    if regions and len(regions) <= 3 and not title.lstrip().startswith("["):
+        title = f"[{'·'.join(regions)}] {title}"  # 지역 공고인데 제목에 [지역]이 없으면 붙임
+
     url = item.get("pblancUrl") or item.get("link") or ""
     if url.startswith("/"):
         url = "https://www.bizinfo.go.kr" + url
@@ -133,7 +137,7 @@ def convert(item, today):
         "period": period,
         "start": start.isoformat() if start else None,
         "end": end.isoformat() if end else None,
-        "regions": regions_of(item, tags),
+        "regions": regions,
         "tags": [t for t in tags if t not in REGIONS][:12],
         "created": clean(item.get("creatPnttm") or item.get("pubDate"))[:10],
         "forSmall": any(k in text for k in ("소상공인", "자영업", "개인사업자", "전통시장", "상인")),

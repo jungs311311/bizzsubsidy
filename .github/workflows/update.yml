@@ -20,6 +20,8 @@ jobs:
           python-version: "3.12"
       - name: 공고문 읽기 도구 설치
         run: pip install olefile pypdf
+      - name: 구글 시트 조건표 읽기 (못 읽으면 지난 값 그대로)
+        run: python scripts/fetch_sheet.py
       - name: 공고 가져오기 · 지원 38개 접수 상태 계산 · 공고문 분석
         env:
           BIZINFO_KEY: ${{ secrets.BIZINFO_KEY }}

@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PROGRAMS = ROOT / "data" / "programs.json"
+SHEET = ROOT / "data" / "sheet.json"
 STATUS = ROOT / "data" / "status.json"
 SEEN = ROOT / "data" / "seen.json"
 REPORT = ROOT / "report.md"
@@ -32,9 +33,26 @@ def brief(row):
     return {k: row.get(k) for k in ("id", "title", "url", "org", "start", "end", "period", "regions")}
 
 
+def merge_sheet(progs):
+    """구글 시트(data/sheet.json)의 '공고 찾기 단어'·'사이트 표시'와 새로 추가한 지원을 반영."""
+    try:
+        rows = json.loads(SHEET.read_text(encoding="utf-8"))["programs"]
+    except (OSError, ValueError, KeyError):
+        return progs
+    by = {p["name"]: dict(p) for p in progs}
+    for s in rows:
+        name = s["name"]
+        if s.get("show") == "N":
+            by.pop(name, None)
+            continue
+        p = by.setdefault(name, {"name": name, "kind": "notice" if s.get("match") else "law", "match": None})
+        p["match"] = s.get("match") or None
+    return list(by.values())
+
+
 def run(rows, today):
     conf = json.loads(PROGRAMS.read_text(encoding="utf-8"))
-    progs = conf["programs"]
+    progs = merge_sheet(conf["programs"])
     nb = conf["newBusiness"]
     first_run = not SEEN.exists()
     seen = set(json.loads(SEEN.read_text(encoding="utf-8"))) if not first_run else set()
