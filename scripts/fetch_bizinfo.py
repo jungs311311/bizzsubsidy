@@ -174,6 +174,13 @@ def main():
     # 사이트 '새 공고' 칸에는 소상공인·개인사업자용만, 마감이 가까운 순, 상시 접수는 뒤로
     items = [{k: v for k, v in r.items() if k != "_keep"} for r in items if r["_keep"]]
     items.sort(key=lambda x: (x["end"] or "9999-12-31", x["title"]))
+    # 공고문 내려받아 금액·금리·대상·제외 업종 뽑기 (실패해도 공고 목록 저장은 계속)
+    if "--no-details" not in sys.argv:
+        try:
+            import fetch_details
+            fetch_details.run(raw, {r["id"] for r in items})
+        except Exception as e:
+            print("공고문 분석 건너뜀:", type(e).__name__, e)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({

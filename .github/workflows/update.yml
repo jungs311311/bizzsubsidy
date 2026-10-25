@@ -12,13 +12,15 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
-      - name: 공고 가져오기 · 지원 38개 접수 상태 계산
+      - name: 공고문 읽기 도구 설치
+        run: pip install olefile pypdf
+      - name: 공고 가져오기 · 지원 38개 접수 상태 계산 · 공고문 분석
         env:
           BIZINFO_KEY: ${{ secrets.BIZINFO_KEY }}
         run: python scripts/fetch_bizinfo.py
@@ -26,7 +28,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/notices.json data/status.json data/seen.json
+          git add data/*.json
           if git diff --staged --quiet; then
             echo "바뀐 공고 없음"
           else
