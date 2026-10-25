@@ -146,6 +146,16 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
 .rwhy{color:var(--muted);font-size:13.5px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
 .notes{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;display:grid;gap:6px}
 .notes a{color:var(--accent)}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs button{font:inherit;font-size:15px;font-weight:600;color:var(--muted);background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;cursor:pointer;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.form input[type=number]{width:100%}
+.pnrow{display:grid;gap:2px;padding:10px 0;border-top:1px solid var(--line);font-size:14px;min-width:0}
+.pnrow:first-child{border-top:0}
+.pnrow a{color:var(--ink);font-weight:600;text-decoration:none}
+.pnrow a:hover,.pnrow a:focus-visible{color:var(--accent);text-decoration:underline}
+.box{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
 @media (prefers-reduced-motion:no-preference){.card{animation:in .25s ease both}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
 </style>
 </head>
@@ -158,7 +168,12 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
     <p>업종·매출·직원 수를 넣으면 법정 규모(소상공인·소기업·중기업)를 판정하고, 받을 수 있는 정부 지원을 골라 보여줍니다.</p>
   </header>
 
-  <div class="cols">
+  <nav class="tabs" role="tablist" aria-label="보기 선택">
+    <button type="button" role="tab" id="tabBiz" aria-controls="bizView" aria-selected="true">사업자 지원</button>
+    <button type="button" role="tab" id="tabPre" aria-controls="preView" aria-selected="false">창업 전 지원</button>
+  </nav>
+
+  <div class="cols" id="bizView" role="tabpanel" aria-labelledby="tabBiz">
     <form class="form" id="f" onsubmit="return false">
       <div class="example" id="ex">예시 값(약국 · 연매출 8억 · 직원 3명)이 들어 있어요. 내 사업장 정보로 바꿔 보세요.</div>
       <div class="field">
@@ -190,6 +205,7 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
             <option value="3" selected>3~7년</option>
             <option value="7">7년 이상</option>
           </select>
+          <div class="hint">사업자등록 전이면 <a href="#pre" style="color:var(--accent)">창업 전 지원</a> 탭에서 더 자세히 볼 수 있어요.</div>
         </div>
       </div>
       <div class="field">
@@ -281,6 +297,72 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
         <div>내 업종이 제외 대상인지 헷갈리면 사업자등록증의 업종코드를 위 표와 맞춰 보거나 중소기업통합콜센터(1357)에 물어보세요.</div>
         <div>지자체 자체 지원(임대료, 시설 개보수, 노란우산 희망장려금 등)은 <a href="https://www.bizinfo.go.kr" target="_blank" rel="noopener">기업마당</a>과 <a href="https://www.sbiz24.kr" target="_blank" rel="noopener">소상공인24</a>에서 지역으로 검색하면 나옵니다.</div>
         <div>금액·조건은 2026년 공개 자료를 정리한 것이며 공고마다 바뀔 수 있습니다. <span id="sheetNote"></span></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="cols" id="preView" role="tabpanel" aria-labelledby="tabPre" hidden>
+    <form class="form" id="pf" onsubmit="return false">
+      <div class="alert"><b>사업자등록은 지원 신청 뒤에.</b> 예비창업자 지원은 대부분 공고일 기준으로 사업자등록이 <b>없어야</b> 신청할 수 있어요. 등록부터 하면 이 지원들을 못 받을 수 있어요.</div>
+      <div class="field">
+        <label for="pAge">대표자 만 나이</label>
+        <input type="number" id="pAge" min="15" max="99" value="35" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="pField">창업하려는 분야</label>
+        <select id="pField">
+          <option value="기술">기술·지식서비스 (앱·제조·콘텐츠 등)</option>
+          <option value="음식">음식점·카페·주점</option>
+          <option value="생활" selected>소매·생활서비스 (가게·미용·교육 등)</option>
+          <option value="농업">농업 (귀농·청년농)</option>
+          <option value="사회">사회 문제 해결 (소셜벤처·사회적기업)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pRegion">창업할 지역</label>
+        <select id="pRegion"></select>
+        <div class="hint">아래 '지금 뜬 예비창업 공고'를 지역으로 거르는 데 써요.</div>
+      </div>
+      <div class="field">
+        <span class="lbl">해당하는 것</span>
+        <div class="checks">
+          <label class="chk"><input type="checkbox" id="pWoman"> 대표가 여성</label>
+          <label class="chk"><input type="checkbox" id="pDis"> 대표가 장애인</label>
+          <label class="chk"><input type="checkbox" id="pClosed"> 예전에 사업을 하다 폐업한 적이 있음</label>
+          <label class="chk"><input type="checkbox" id="pTeam"> 2명 이상 팀으로 창업</label>
+        </div>
+      </div>
+    </form>
+
+    <section class="results" aria-live="polite">
+      <section class="judge">
+        <div class="tally"><h2>창업 전 지원 판정</h2><span class="hint" id="pTotal"></span></div>
+        <div class="sumbar" id="pSum"></div>
+        <p class="hint" style="margin:0">지원마다 <b>나이 → 분야 → 조건</b> 순서로 따져요. ✓ 통과 · ? 확인 필요 · ✕ 안 됨. 대부분 사업계획서로 뽑는 경쟁 선발이라, 조건이 맞아도 선정돼야 받아요.</p>
+        <h3 class="gh" id="pHYes">받을 수 있어요</h3>
+        <div class="list" id="pYes"></div>
+        <h3 class="gh" id="pHChk">확인하면 받을 수 있어요</h3>
+        <div class="list" id="pChk"></div>
+        <p class="empty" id="pEmpty">지원 목록을 불러오는 중이에요.</p>
+        <details class="grp" id="pNoD"><summary>받을 수 없어요 <span id="pNoN"></span></summary><div class="rows" id="pNo"></div></details>
+      </section>
+
+      <section class="notices">
+        <div class="tally"><h2>지금 뜬 예비창업 공고</h2><span class="pill check" id="pnCount"></span></div>
+        <p class="hint" style="margin:0">기업마당 공고 중 제목·대상에 '예비창업'이 들어간 것이에요. 지역을 고르면 그 지역과 전국 공고만 보여요. 지자체 예비창업 지원은 대부분 여기서 찾을 수 있어요.</p>
+        <div class="box"><div id="pnList"></div></div>
+        <button type="button" class="more" id="pnMore" hidden>더 보기</button>
+      </section>
+
+      <details class="grp" open>
+        <summary>사업자등록 하고 나서 바로 챙길 것</summary>
+        <div class="rows" id="pAfter"></div>
+      </details>
+
+      <div class="notes">
+        <div><b>예비창업자</b>는 공고일 기준으로 본인 이름의 사업자등록(법인 대표 포함)이 없는 사람이에요. 폐업 이력이 있으면 같은 업종은 일정 기간이 지나야 하거나 재창업 지원으로 신청해요.</div>
+        <div>전체 창업 지원사업은 <a href="https://www.k-startup.go.kr" target="_blank" rel="noopener">K-Startup</a>(창업진흥원)과 <a href="https://www.sbiz24.kr" target="_blank" rel="noopener">소상공인24</a>에서 볼 수 있어요. 문의: 중소기업통합콜센터 1357.</div>
+        <div>금액·시기는 2026년 공고를 정리한 것이며 매주 공식 자료와 대조해 고쳐요. <span id="preSheetNote"></span></div>
       </div>
     </section>
   </div>
@@ -1010,6 +1092,86 @@ $("nregion").addEventListener("input",()=>{$("region").value=$("nregion").value;
 ["nq","nsoon","nsmall","nfit","nmoney","nsort"].forEach(id=>$(id).addEventListener("input",()=>{nShown=20;renderNotices()}));
 ["input","change"].forEach(ev=>$("f").addEventListener(ev,()=>{nShown=20;renderNotices()}));
 $("nMore").addEventListener("click",()=>{nShown+=20;renderNotices()});
+// ---- 창업 전 지원 탭 (구글 시트 '창업 전 지원' 탭 → data/sheet.json의 pre) ----
+let PRE=[],pnShown=15;
+const FLAB={기술:"기술·지식서비스",음식:"음식점·카페",생활:"소매·생활서비스",농업:"농업",사회:"사회적 목적"};
+const MUSTLAB={여성:"대표가 여성",장애인:"대표가 장애인",폐업경험:"폐업한 경험이 있는 사람",팀:"2명 이상 팀"};
+$("pRegion").innerHTML=$("region").innerHTML;$("pRegion").options[0].textContent="전체 (지역 구분 없이)";
+function preRead(){return {age:Math.floor(+$("pAge").value||0),field:$("pField").value,region:$("pRegion").value,
+  여성:$("pWoman").checked,장애인:$("pDis").checked,폐업경험:$("pClosed").checked,팀:$("pTeam").checked}}
+function preJudge(p,s){
+  const lo=p.ageMin,hi=p.ageMax,ageTxt=lo&&hi?`만 ${lo}~${hi}세`:hi?`만 ${hi}세 이하`:lo?`만 ${lo}세 이상`:"";
+  const age=!ageTxt?["ok","나이 제한 없음"]:(!s.age?["chk",`${ageTxt}만 대상 (나이를 넣어 주세요)`]:(lo&&s.age<lo)||(hi&&s.age>hi)?["no",`${ageTxt}만 대상 (입력 만 ${s.age}세)`]:["ok",ageTxt]);
+  const F=p.fields||[],NF=p.noFields||[];
+  const field=NF.includes(s.field)?["no",`${FLAB[s.field]} 창업은 대상이 아니에요`]:(!F.length||F.includes("전체")||F.includes(s.field))?["ok",F.length&&!F.includes("전체")?`${FLAB[s.field]} 분야 대상`:"분야 제한 없음"]:["chk",`주로 ${F.map(f=>FLAB[f]||f).join("·")} 분야를 뽑아요. 내 아이템이 해당하는지`];
+  const extras=(p.extra||"").split(";").map(t=>t.trim()).filter(Boolean).map(t=>{const m=t.match(/^(기술|음식|생활|농업|사회|여성|장애인|폐업경험|팀):(.+)$/);
+    return m?((m[1]===s.field||s[m[1]])?m[2].trim():null):t}).filter(Boolean);
+  const cond=p.must&&!s[p.must]?["no",`${MUSTLAB[p.must]||p.must}만 대상`]:extras.length?["chk",extras.join(" · ")]:["ok",p.must?MUSTLAB[p.must]:"따로 조건 없음"];
+  const steps=[["나이",age],["분야",field],["조건",cond]];
+  const bad=steps.find(([,r])=>r[0]==="no");
+  if(bad)return {g:"no",stage:bad[0],why:bad[1][1],steps};
+  const need=steps.filter(([,r])=>r[0]==="chk").map(([,r])=>r[1]);
+  return need.length?{g:"check",need,steps}:{g:"yes",steps};
+}
+function preLive(p){const st=STATUS&&STATUS.programs&&STATUS.programs[p.name];return st&&st.kind==="notice"&&st.national&&st.national.length?st.national[0]:null}
+function preWhen(p){const r=preLive(p),today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+  if(r){const d=r.end?Math.round((new Date(r.end)-new Date(today))/864e5):null;
+    return ` · <a class="live" href="${esc(safeUrl(r.url))}" target="_blank" rel="noopener">지금 접수 중${d===null?" · 예산 소진 시까지":d<=0?" · 오늘 마감":` · D-${d}`}</a>`}
+  return p.when?` · <span class="when">${esc(p.when)}</span>`:""}
+const preClosed=p=>!preLive(p)&&/접수 끝남/.test(p.when||"");
+function renderPre(){
+  const s=preRead(),list=PRE.filter(p=>p.show!=="N");
+  $("pEmpty").hidden=!!list.length;$("pEmpty").textContent="지원 목록을 불러오는 중이에요.";
+  const MK={ok:"✓",chk:"?",no:"✕",na:"–"};
+  const J=list.map(p=>({p,...preJudge(p,s)}));
+  const sortC=a=>J.filter(x=>x.g===a).sort((x,y)=>preClosed(x.p)-preClosed(y.p));
+  const yes=sortC("yes"),chk=sortC("check"),no=J.filter(x=>x.g==="no");
+  const badge=([lab,[st,why]])=>`<span class="sb ${st}" title="${esc(why)}">${lab} ${MK[st]}</span>`;
+  const card=x=>`<article class="card ${x.g}">
+      <div class="card-top"><h3>${esc(x.p.name)}${preClosed(x.p)?` <span class="closed">2026년 접수 끝남 · 다음 공고 대기</span>`:""}</h3><span class="cats">${x.p.tag?`<span class="cat">${esc(x.p.tag)}</span>`:""}<span class="cat">${esc(x.p.cat||"")}</span></span></div>
+      <div class="meta">${esc(x.p.org)} · <span class="amt">${esc(x.p.amt)}</span>${preWhen(x.p)}</div>
+      <div class="steps">${x.steps.map(badge).join("")}</div>
+      ${x.need?`<p class="need"><b>확인할 것</b>${esc(x.need.join(" · "))}</p>`:""}
+      <p class="why">${esc(x.p.about)}</p>
+      ${safeUrl(x.p.url)?`<a href="${esc(x.p.url)}" target="_blank" rel="noopener">${esc(x.p.url.replace(/^https?:\/\//,""))} →</a>`:""}
+    </article>`;
+  $("pTotal").textContent=list.length?`전체 ${list.length}개`:"";
+  $("pSum").innerHTML=list.length?`<span class="pill yes">받을 수 있어요 ${yes.length}</span><span class="pill check">확인하면 가능 ${chk.length}</span><span class="pill no">받을 수 없어요 ${no.length}</span>`:"";
+  $("pHYes").hidden=!yes.length;$("pYes").innerHTML=yes.map(card).join("");
+  $("pHChk").hidden=!chk.length;$("pChk").innerHTML=chk.map(card).join("");
+  if(list.length&&!yes.length&&!chk.length){$("pEmpty").hidden=false;$("pEmpty").textContent="지금 조건으로 받을 수 있는 지원이 없어요. 아래에서 이유를 확인하세요."}
+  $("pNoD").hidden=!no.length;$("pNoN").textContent=no.length;
+  $("pNo").innerHTML=no.map(x=>`<div class="row"><div class="rname"><b>${esc(x.p.name)}</b><span class="meta">${esc(x.p.amt)}</span></div><div class="rwhy"><span class="sb no">${x.stage} ✕</span><span>${esc(x.why)}</span></div></div>`).join("");
+  // 사업자등록 후 챙길 것 (사업자 지원 탭의 지원)
+  const AFTER=[["창업중소기업 세액감면","창업 후 5년간 소득세 감면. 만 34세 이하 청년 창업이면 수도권 밖 100%"],["일반경영안정자금","사업자등록 후 소상공인이면 업력과 관계없이 신청하는 소진공 정책자금"],["노란우산공제","대표 퇴직금 성격의 공제. 납입액 소득공제"],["두루누리 사회보험료 지원","직원을 처음 뽑으면 국민연금·고용보험 80% 지원"],["자영업자 고용보험료 지원","1인 사업자가 고용보험에 가입하면 보험료 일부 환급"]];
+  $("pAfter").innerHTML=AFTER.filter(([n])=>P.some(p=>p.name===n)).map(([n,t])=>`<div class="row"><div class="rname"><b>${n}</b></div><div class="rwhy"><span>${t}</span></div></div>`).join("")+
+    `<div class="row"><div class="rwhy"><span>사업자등록을 하면 <a href="#biz" style="color:var(--accent)">사업자 지원</a> 탭에서 업종·매출로 자세히 판정해 볼 수 있어요.</span></div></div>`;
+  renderPreNotices();
+}
+function renderPreNotices(){
+  const box=$("pnList");
+  if(!NOTICE||!NOTICE.items){box.innerHTML=`<p class="empty">공고를 불러오는 중이에요.</p>`;$("pnCount").hidden=true;return}
+  const s=preRead(),today=new Date(Date.now()+9*3600e3).toISOString().slice(0,10);
+  const rows=NOTICE.items.filter(it=>/예비\s*창업|예비\s*창업자|예비재창업/.test([it.title,it.target,(it.tags||[]).join(" ")].join(" "))&&
+    (!s.region||!it.regions.length||it.regions.includes(s.region))&&(!it.end||it.end>=today))
+    .sort((a,b)=>(a.end||"9999")<(b.end||"9999")?-1:1);
+  $("pnCount").hidden=false;$("pnCount").textContent=`${rows.length}건`;
+  box.innerHTML=rows.length?rows.slice(0,pnShown).map(it=>{const [cls,txt]=dday(it,today);const u=safeUrl(it.url);
+    return `<div class="pnrow"><div class="card-top">${u?`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(rtitle(it))}</a>`:`<b>${esc(rtitle(it))}</b>`}<span class="dday ${cls}">${txt}</span></div>
+      <div class="meta">${[it.org,it.execOrg!==it.org?it.execOrg:"",it.period].filter(Boolean).map(esc).join(" · ")}</div></div>`}).join("")
+    :`<p class="empty">지금 접수 중인 예비창업 공고가 없어요.</p>`;
+  $("pnMore").hidden=rows.length<=pnShown;
+}
+$("pf").addEventListener("input",()=>{pnShown=15;renderPre()});
+$("pnMore").addEventListener("click",()=>{pnShown+=15;renderPreNotices()});
+// 탭 바꾸기 (주소 끝 #pre 로 바로 열 수 있음)
+function showTab(pre){$("bizView").hidden=pre;$("preView").hidden=!pre;
+  $("tabBiz").setAttribute("aria-selected",String(!pre));$("tabPre").setAttribute("aria-selected",String(pre));
+  if(pre){if(!$("pRegion").value&&$("region").value)$("pRegion").value=$("region").value;renderPre()}}
+$("tabBiz").addEventListener("click",()=>{history.replaceState(null,"","#biz");showTab(false)});
+$("tabPre").addEventListener("click",()=>{history.replaceState(null,"","#pre");showTab(true)});
+window.addEventListener("hashchange",()=>{showTab(location.hash==="#pre");window.scrollTo(0,0)});
+
 // 구글 시트 조건표 (매일 아침 GitHub이 data/sheet.json으로 저장). 없거나 못 읽으면 위에 적힌 기본값 그대로
 const SIZES={ss:1,small:1,sme:1,any:1,kosmes:1};
 function applySheet(S){
@@ -1026,12 +1188,14 @@ function applySheet(S){
   SIT.credit=`신용점수(NICE)가 ${K.creditScore}점 이하`;SIT.hiloan=`연 ${K.refiRate}% 이상 고금리 사업자 대출이 있음`;SIT.drop=`매출이 전년보다 ${K.dropPct}% 이상 줄었음`;
   ["credit","hiloan","drop"].forEach(id=>{const l=$(id).parentNode;l.lastChild.textContent=" "+SIT[id]});
   [...$("ind").options].forEach((o,i)=>o.textContent=IND[i].n);
+  if(Array.isArray(S.pre)){PRE=S.pre;const pn=$("preSheetNote");if(pn)pn.innerHTML=`<a href="${S.source}" target="_blank" rel="noopener">조건표</a> ${S.updatedAt} 반영.`}
   const n=$("sheetNote");if(n)n.innerHTML=`판정 기준값은 <a href="${S.source}" target="_blank" rel="noopener">사업체 보조금 조건표</a>(${S.updatedAt} 반영)를 따릅니다.`;
 }
-fetch("data/sheet.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){applySheet(d);render()}}).catch(()=>{});
-fetch("data/status.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){STATUS=d;render()}}).catch(()=>{});
+fetch("data/sheet.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){applySheet(d);render();renderPre()}}).catch(()=>{});
+if(location.hash==="#pre")showTab(true);
+fetch("data/status.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){STATUS=d;render();if(!$("preView").hidden)renderPre()}}).catch(()=>{});
 fetch("data/details.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){DETAIL=d.items;renderNotices()}}).catch(()=>{});
-fetch("data/notices.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{NOTICE=d;renderNotices()})
+fetch("data/notices.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{NOTICE=d;renderNotices();renderPreNotices()})
   .catch(()=>{document.querySelector(".notices").hidden=true}); // 공고 파일이 없는 곳(미리보기)에서는 숨김
 </script>
 </body>

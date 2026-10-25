@@ -14,7 +14,7 @@ import urllib.request
 from pathlib import Path
 
 SHEET_ID = "13crp7Mxc9zroQjgtSpVjeMvLAGd87dPfCFFQY2ZevDY"
-TABS = {"programs": 0, "k": 1, "ind": 2}  # 탭 gid: 지원 목록, 기준값, 업종 규모 기준
+TABS = {"programs": 0, "k": 1, "ind": 2, "pre": 5}  # 탭 gid: 지원 목록, 기준값, 업종 규모 기준, 창업 전 지원
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "sheet.json"
 KST = dt.timezone(dt.timedelta(hours=9))
@@ -28,6 +28,16 @@ PROGRAM_COLS = {
 }
 SIZES = {"소상공인": "ss", "소기업 이하": "small", "중소기업": "sme", "제한 없음": "any", "중진공 기준": "kosmes"}
 CATS = {"받는 돈", "줄이는 돈", "빌리는 돈", "재기", "성장", "우대", "배우기"}
+
+# 창업 전 지원 탭
+PRE_COLS = {
+    "name": "지원명", "org": "기관", "cat": "분류", "tag": "꼬리표", "amt": "지원 금액", "when": "신청 시기",
+    "about": "설명", "url": "신청 링크", "ageMin": "나이 최소", "ageMax": "나이 최대", "fields": "맞는 분야",
+    "noFields": "안 되는 분야", "must": "꼭 필요한 조건", "extra": "추가 확인 조건", "match": "공고 찾기 단어",
+    "show": "사이트 표시", "checked": "마지막 확인일", "basis": "확인 근거",
+}
+FIELDS = {"기술", "음식", "생활", "농업", "사회", "전체"}
+MUSTS = {"여성", "장애인", "폐업경험", "팀"}
 
 
 class SheetError(Exception):
@@ -104,6 +114,44 @@ def parse_programs(rows):
     return out, warn
 
 
+def parse_pre(rows):
+    head = rows[0]
+    idx = {k: next((i for i, h in enumerate(head) if w in h), None) for k, w in PRE_COLS.items()}
+    for need in ("name", "amt", "about"):
+        if idx[need] is None:
+            raise SheetError(f"창업 전 지원 탭에 '{PRE_COLS[need]}' 칸이 없어요")
+    out, warn, names = [], [], set()
+    for n, row in enumerate(rows[1:], start=2):
+        r = {k: cell(row, i) for k, i in idx.items()}
+        if not r["name"] or r["name"] in names:
+            continue
+        names.add(r["name"])
+        for k in ("ageMin", "ageMax"):
+            r[k] = num(r[k]) if r[k] else None
+        for k in ("fields", "noFields"):
+            vals = [v.strip() for v in re.split(r"[,·/]", r[k]) if v.strip()]
+            bad = [v for v in vals if v not in FIELDS]
+            if bad:
+                warn.append(f"창업 전 {n}행 분야 '{', '.join(bad)}'를 몰라서 뺐어요")
+            r[k] = [v for v in vals if v in FIELDS]
+        if r["must"] and r["must"] not in MUSTS:
+            warn.append(f"창업 전 {n}행 꼭 필요한 조건 '{r['must']}'를 몰라서 비웠어요")
+            r["must"] = ""
+        if r["cat"] and r["cat"] not in CATS:
+            r["cat"] = ""
+        if r["match"]:
+            try:
+                re.compile(r["match"])
+            except re.error:
+                warn.append(f"창업 전 {n}행 공고 찾기 단어가 잘못돼서 비웠어요")
+                r["match"] = ""
+        r["show"] = "N" if r["show"].upper() == "N" else "Y"
+        if r["url"] and not r["url"].startswith("http"):
+            r["url"] = "https://" + r["url"]
+        out.append(r)
+    return out, warn
+
+
 def parse_k(rows):
     out, warn = {}, []
     for n, row in enumerate(rows[1:], start=2):
@@ -144,18 +192,24 @@ def main():
         print(f"⚠ 시트 내용이 너무 적어요 (지원 {len(programs)}, 기준값 {len(k)}, 업종 {len(ind)}) → 기존 sheet.json을 그대로 씀")
         return 0
     warnings = w1 + w2 + w3
+    old = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
+    try:  # 창업 전 탭은 못 읽어도 나머지는 반영
+        pre, w4 = parse_pre(fetch_csv(TABS["pre"]))
+        warnings += w4
+    except SheetError as e:
+        print(f"⚠ 창업 전 지원 탭: {e} → 지난 값 그대로")
+        pre = old.get("pre", [])
     data = {
         "updatedAt": dt.datetime.now(KST).strftime("%Y-%m-%d %H:%M"),
         "source": f"https://docs.google.com/spreadsheets/d/{SHEET_ID}",
-        "programs": programs, "k": k, "ind": ind, "warnings": warnings,
+        "programs": programs, "k": k, "ind": ind, "pre": pre, "warnings": warnings,
     }
-    old = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
-    same = all(old.get(x) == data[x] for x in ("programs", "k", "ind", "warnings"))
+    same = all(old.get(x) == data[x] for x in ("programs", "k", "ind", "pre", "warnings"))
     if same:
         print("시트 내용 바뀐 것 없음")
         return 0
     OUT.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"시트 반영: 지원 {len(programs)}개, 기준값 {len(k)}개, 업종 {len(ind)}개")
+    print(f"시트 반영: 지원 {len(programs)}개, 창업 전 {len(pre)}개, 기준값 {len(k)}개, 업종 {len(ind)}개")
     for w in warnings:
         print("  ⚠", w)
     return 0

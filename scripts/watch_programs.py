@@ -36,7 +36,8 @@ def brief(row):
 def merge_sheet(progs):
     """구글 시트(data/sheet.json)의 '공고 찾기 단어'·'사이트 표시'와 새로 추가한 지원을 반영."""
     try:
-        rows = json.loads(SHEET.read_text(encoding="utf-8"))["programs"]
+        sheet = json.loads(SHEET.read_text(encoding="utf-8"))
+        rows = sheet["programs"] + sheet.get("pre", [])
     except (OSError, ValueError, KeyError):
         return progs
     by = {p["name"]: dict(p) for p in progs}
