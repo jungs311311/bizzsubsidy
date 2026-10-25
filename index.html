@@ -42,6 +42,13 @@ body{margin:0}
 .fit li{display:flex;gap:4px}
 .fit .ok{color:var(--accent)}.fit .chk{color:var(--warn)}.fit .no{color:var(--off)}
 .fit li span{font-family:var(--f-num);font-weight:700}
+.money{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.money b{font-size:13px;font-weight:700;background:var(--accent-soft);color:var(--accent);border-radius:6px;padding:2px 8px}
+.money i{font-style:normal;font-size:12.5px;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+.dt{font-size:13px;color:var(--muted);line-height:1.5;margin:0}
+.dt summary{cursor:pointer;color:var(--ink)}
+.dt div{margin-top:4px}.dt div b{color:var(--ink);font-weight:600;margin-right:4px}
+.nsort{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
 .more{justify-self:start;font:inherit;font-weight:600;color:var(--accent);background:var(--paper);border:1px solid var(--accent);border-radius:8px;padding:8px 16px;cursor:pointer}
 .more:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
@@ -252,6 +259,8 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
           <label class="chk"><input type="checkbox" id="nsoon"> 2주 안에 마감</label>
           <label class="chk"><input type="checkbox" id="nsmall" checked> <span id="nsmallTxt">소상공인 대상만</span></label>
           <label class="chk"><input type="checkbox" id="nfit" checked> 내 조건에 안 맞는 공고 숨기기</label>
+          <label class="chk"><input type="checkbox" id="nmoney"> 지원 금액 나온 것만</label>
+          <select id="nsort" class="nsort" aria-label="정렬"><option value="end">마감 가까운 순</option><option value="amt">지원 금액 큰 순</option><option value="loan">대출 한도 큰 순</option><option value="new">최근 올라온 순</option></select>
         </div>
         <p class="hint" style="margin:0">공고 제목과 대상의 단어로 내 업종·상황과 맞는지 자동으로 표시해요. ✓ 맞음 · ? 공고문 확인 · ✕ 안 맞음. 단어만 보는 거라 틀릴 수 있으니, 신청 전에는 공고문을 꼭 확인하세요.</p>
         <div class="list" id="nList"></div>
@@ -904,9 +913,12 @@ function fitNotice(it,m){
   const why=[];const seen=new Set();
   const add=v=>{if(!seen.has(v[1])){seen.add(v[1]);why.push(v)}};
   for(const r of FIT_RULES)if(r.re.test(head))add(r.test(m));
+  const D=it._d||{};
   if(m.x){
-    if(FIT_POLICY.test(head))add(["no",`${m.xn}은(는) 소진공 정책자금·바우처 제외 업종`]);
-    else if(FIT_LOCALFUND.test(head))add(["chk",`${m.xn}이(가) 제외 업종인지 공고문 확인`]);
+    const inExcl=(D.excl||[]).some(w=>m.xn.includes(w)||w===m.xn||(m.x==="health"&&/보건|의료|의원|병원/.test(w))||(m.x==="pharm"&&/약국|보건/.test(w)));
+    if(inExcl)add(["no",`공고문 제외 업종에 ${m.xn} 포함`]);
+    else if(FIT_POLICY.test(head))add(["no",`${m.xn}은(는) 소진공 정책자금·바우처 제외 업종`]);
+    else if(FIT_LOCALFUND.test(head))add(["chk",D.hasExclList?`공고문 제외 업종 목록에서 ${m.xn}은 못 찾음, 한 번 더 확인`:`${m.xn}이(가) 제외 업종인지 공고문 확인`]);
   }
   const st=why.some(w=>w[0]==="no")?"no":why.some(w=>w[0]==="chk")?"chk":"ok";
   if(!why.length)why.push(["ok","업종·대상 제한 단어 없음"]);
@@ -919,6 +931,29 @@ function myFit(){
     youth:on("youth"),woman:on("woman"),disabled:on("disabled"),hire:on("hire"),hireYouth:on("hireYouth"),staffUp:on("staffUp"),
     leave:on("leave"),close:on("close"),credit:on("credit"),drop:on("drop"),debtTrouble:on("debtTrouble")};
 }
+let DETAIL=null;
+function moneyLine(D){
+  if(!D)return "";
+  const a=[];
+  if(D.amt)a.push(`<b>최대 ${esc(D.amtText)}</b>`);
+  if(D.loan)a.push(`<b>대출 한도 ${esc(D.loanText)}</b>`);
+  if(D.rateSub)a.push(`<i>이자 지원 ${D.rateSub}%p</i>`);else if(D.rate)a.push(`<i>금리 연 ${D.rate}%</i>`);
+  if(D.ratio&&D.ratio<100)a.push(`<i>비용의 ${D.ratio}% 지원</i>`);
+  if(D.countText)a.push(`<i>${esc(D.countText)} 선정</i>`);
+  (D.forms||[]).slice(0,2).forEach(f=>a.push(`<i>${esc(f)}</i>`));
+  return a.length?`<p class="money">${a.join("")}</p>`:"";
+}
+function detailBox(D){
+  if(!D)return "";
+  const rows=[];
+  if(D.target)rows.push(`<div><b>지원 대상</b> ${esc(D.target)}</div>`);
+  if(D.amtWhy)rows.push(`<div><b>금액 근거</b> ${esc(D.amtWhy)}</div>`);
+  if(D.loanWhy)rows.push(`<div><b>대출 근거</b> ${esc(D.loanWhy)}</div>`);
+  if(D.rateWhy)rows.push(`<div><b>금리 근거</b> ${esc(D.rateWhy)}</div>`);
+  if(D.excl&&D.excl.length)rows.push(`<div><b>제외 업종에 나온 말</b> ${esc(D.excl.join(", "))}</div>`);
+  if(!rows.length)return "";
+  return `<details class="dt"><summary>공고문에서 뽑은 내용 (${D.src==="공고문"?"공고문 자동 분석":"소개글만 분석"})</summary>${rows.join("")}<div>자동으로 뽑은 내용이라 틀릴 수 있어요. 신청 전 공고문을 확인하세요.</div></details>`;
+}
 function renderNotices(){
   const box=$("nList"),upd=$("nUpd");
   if(!NOTICE){return}
@@ -929,30 +964,36 @@ function renderNotices(){
   const region=$("region").value,q=$("nq").value.trim().toLowerCase(),pre=$("yrs").value==="-1";
   $("nsmallTxt").textContent=pre?"예비창업자 대상만":"소상공인 대상만";
   NOTICE.items.forEach(it=>{if(it.regions.length>=10)it.regions=[]}); // 17개 시·도가 다 붙은 옛 데이터는 전국으로
-  const me=myFit(),hideNo=$("nfit").checked;let hidden=0;
-  NOTICE.items.forEach(it=>{it._fit=fitNotice(it,me)});
+  const me=myFit(),hideNo=$("nfit").checked,onlyMoney=$("nmoney").checked,sort=$("nsort").value;let hidden=0;
+  NOTICE.items.forEach(it=>{it._d=(DETAIL&&DETAIL[it.id])||null;it._fit=fitNotice(it,me)});
   const rows=NOTICE.items.filter(it=>
     (!region||!it.regions.length||it.regions.includes(region))&&
     (!$("nsmall").checked||(pre?/예비/.test([it.title,it.target,(it.tags||[]).join(" ")].join(" ")):it.forSmall))&&
     (!$("nsoon").checked||(it.end&&it.end<=soonLimit))&&
     (!q||[it.title,it.org,it.target,it.summary,(it.tags||[]).join(" ")].join(" ").toLowerCase().includes(q))&&
+    (!onlyMoney||(it._d&&(it._d.amt||it._d.loan)))&&
     (!hideNo||it._fit.st!=="no"||(hidden++,false)));
+  const SK={amt:it=>-((it._d&&it._d.amt)||0),loan:it=>-((it._d&&it._d.loan)||0),new:it=>-(+new Date(it.created||0)||0),end:it=>it.end?+new Date(it.end):9e15};
+  rows.sort((a,b)=>SK[sort](a)-SK[sort](b)||(SK.end(a)-SK.end(b)));
   $("nCount").hidden=false;$("nCount").textContent=`${rows.length}건`+(hidden?` · 안 맞는 ${hidden}건 숨김`:"");
   box.innerHTML=rows.length?rows.slice(0,nShown).map(it=>{const [cls,txt]=dday(it,today);const url=safeUrl(it.url);
     const F=it._fit,MK={ok:"✓",chk:"?",no:"✕"};
     return `<article class="ncard fit-${F.st}">
       <div class="card-top"><h3>${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(it.title)}</a>`:esc(it.title)}</h3><span class="dday ${cls}">${txt}</span></div>
       <div class="meta">${[it.org,it.execOrg!==it.org?it.execOrg:"",it.period].filter(Boolean).map(esc).join(" · ")}</div>
+      ${moneyLine(it._d)}
       <ul class="fit">${F.why.map(w=>`<li class="${w[0]}"><span>${MK[w[0]]}</span>${esc(w[1])}</li>`).join("")}</ul>
       ${it.summary?`<p class="why">${esc(it.summary)}</p>`:""}
+      ${detailBox(it._d)}
       <div class="chips">${(it.regions.length?it.regions:["전국"]).map(r=>`<span class="cat">${esc(r)}</span>`).join("")}${it.field?`<span class="cat">${esc(it.field)}</span>`:""}${it.target?`<span class="cat">대상: ${esc(it.target)}</span>`:""}</div>
     </article>`}).join(""):`<p class="empty">조건에 맞는 공고가 없어요. 검색어나 지역을 바꿔 보세요.</p>`;
   $("nMore").hidden=rows.length<=nShown;
 }
-["nq","nsoon","nsmall","nfit"].forEach(id=>$(id).addEventListener("input",()=>{nShown=20;renderNotices()}));
+["nq","nsoon","nsmall","nfit","nmoney","nsort"].forEach(id=>$(id).addEventListener("input",()=>{nShown=20;renderNotices()}));
 ["input","change"].forEach(ev=>$("f").addEventListener(ev,()=>{nShown=20;renderNotices()}));
 $("nMore").addEventListener("click",()=>{nShown+=20;renderNotices()});
 fetch("data/status.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){STATUS=d;render()}}).catch(()=>{});
+fetch("data/details.json",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(d=>{if(d){DETAIL=d.items;renderNotices()}}).catch(()=>{});
 fetch("data/notices.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{NOTICE=d;renderNotices()})
   .catch(()=>{document.querySelector(".notices").hidden=true}); // 공고 파일이 없는 곳(미리보기)에서는 숨김
 </script>
