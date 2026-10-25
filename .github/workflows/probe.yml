@@ -1,0 +1,41 @@
+name: probe (임시 점검)
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: 응답 필드와 첨부파일 점검
+        env:
+          BIZINFO_KEY: ${{ secrets.BIZINFO_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os,sys,json,urllib.request,urllib.parse
+          sys.path.insert(0,"scripts")
+          import fetch_bizinfo as f
+          data=f.call_api(os.environ["BIZINFO_KEY"])
+          items=f.items_of(data)
+          print("count",len(items))
+          it=items[0]
+          for k,v in it.items(): print("FIELD",k,"=",str(v)[:200])
+          n=0
+          for it in items:
+            t=str(it.get("pblancNm",""))
+            if "소상공인" not in t: continue
+            for k,v in it.items():
+              if any(s in k.lower() for s in ("file","flpth")): print("ATT",k,"=",str(v)[:300])
+            n+=1
+            if n>=3: break
+          PY
+      - name: 첨부파일 내려받기 시험
+        run: |
+          python3 - <<'PY'
+          import urllib.request
+          u="https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000126035"
+          r=urllib.request.urlopen(urllib.request.Request(u,headers={"User-Agent":"Mozilla/5.0"}),timeout=60)
+          h=r.read().decode("utf-8","replace")
+          import re
+          for m in re.findall(r'[^"\']*(?:fileDown|atchFile|download|FileDown)[^"\']*',h)[:15]: print("LINK",m[:250])
+          i=h.find("첨부"); print("CTX",h[i-200:i+1500] if i>0 else "no 첨부")
+          PY
