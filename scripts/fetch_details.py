@@ -19,7 +19,7 @@ OUT = Path(__file__).resolve().parent.parent / "data" / "details.json"
 KST = dt.timezone(dt.timedelta(hours=9))
 MAX_NEW = 1500        # 한 번에 새로 받을 공고문 수 (나머지는 다음 날)
 WORKERS = 6
-VERSION = 3           # 뽑는 규칙을 크게 바꾸면 올려서 전부 다시 읽게 함
+VERSION = 4           # 뽑는 규칙을 크게 바꾸면 올려서 전부 다시 읽게 함
 
 
 def pick_file(it):
@@ -58,7 +58,7 @@ def one(it):
         return _one(it)
     except Exception as e:  # 공고 하나가 이상해도 나머지는 계속
         print(f"  분석 실패 {it.get('pblancId')}: {type(e).__name__}: {str(e)[:80]}")
-        d = details.extract(summary_text(it), title=str(it.get("pblancNm") or ""))
+        d = details.extract(summary_text(it), title=str(it.get("pblancNm") or ""), cash_cap=10**9, loan_cap=5 * 10**9)
         d.update(src="소개글", f="", v=0)
         return str(it.get("pblancId")), d
 
@@ -71,7 +71,7 @@ def _one(it):
         if data:
             doc = doc_text.text_of(data, name)
     text = (summary_text(it) + "\n" + doc).strip()
-    d = details.extract(text, title=str(it.get("pblancNm") or ""))
+    d = details.extract(text, title=str(it.get("pblancNm") or ""), cash_cap=10**9, loan_cap=5 * 10**9)
     d["src"] = "공고문" if len(doc) > 200 else "소개글"
     d["f"] = url
     d["v"] = VERSION
@@ -106,7 +106,7 @@ def run(raw_items, keep_ids):
                 print(f"  {n}건 읽음 ({time.time() - t0:.0f}초)", flush=True)
     for it in todo[MAX_NEW:]:  # 못 읽은 건 소개글로라도
         pid = str(it.get("pblancId"))
-        d = details.extract(summary_text(it), title=str(it.get("pblancNm") or ""))
+        d = details.extract(summary_text(it), title=str(it.get("pblancNm") or ""), cash_cap=10**9, loan_cap=5 * 10**9)
         d.update(src="소개글", f="", v=0)
         result[pid] = d
     by_src = {}
