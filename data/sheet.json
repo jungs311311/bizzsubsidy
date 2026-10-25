@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-10-25 19:34",
+ "updatedAt": "2026-10-25 19:35",
  "source": "https://docs.google.com/spreadsheets/d/13crp7Mxc9zroQjgtSpVjeMvLAGd87dPfCFFQY2ZevDY",
  "programs": [
   {
@@ -940,7 +940,7 @@
    "noFields": [],
    "must": "장애인",
    "extra": "",
-   "match": "장애인창업",
+   "match": "장애인창업사업화",
    "show": "Y",
    "checked": "2026-10-25",
    "basis": "파이낸셜뉴스 2026.2.3 (장애인기업종합지원센터 발표)"
