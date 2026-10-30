@@ -295,7 +295,6 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
           <label class="nreg"><span>지역</span><select id="nregion" class="nsort" aria-label="공고 지역"></select></label>
           <input id="nq" type="search" placeholder="공고 검색 (예: 배달, 전기요금, 컨설팅)" aria-label="공고 검색">
           <label class="chk"><input type="checkbox" id="nsoon"> 2주 안에 마감</label>
-          <label class="chk"><input type="checkbox" id="nsmall" checked> <span id="nsmallTxt">소상공인 대상만</span></label>
           <label class="chk"><input type="checkbox" id="nfit" checked> 내 조건에 안 맞는 공고 숨기기</label>
           <label class="chk"><input type="checkbox" id="nmoney"> 지원 금액 나온 것만</label>
           <select id="nsort" class="nsort" aria-label="정렬"><option value="new" selected>최근 올라온 순</option><option value="end">마감 가까운 순</option><option value="amt">지원 금액 큰 순</option><option value="loan">대출 한도 큰 순</option></select>
@@ -1034,6 +1033,19 @@ function fitNotice(it,m){
   const why=[];const seen=new Set();
   const add=v=>{if(!seen.has(v[1])){seen.add(v[1]);why.push(v)}};
   for(const r of FIT_RULES)if(r.re.test(head))add(r.test(m));
+  // 규모·예비창업: 왼쪽 판정(소상공인·소기업·중기업·예비창업자)과 공고 대상 비교
+  const SS=/소상공인|자영업|개인사업자|전통시장|상인회|상점가|점포/,SME=/중소기업|중소\s*[ㆍ·]|중기업|소기업|창업기업|벤처/;
+  const BIG=/중견기업|대기업/,PRE=/예비\s*(재)?창업/,EXIST=/기업|소상공인|사업자|업체|점포|\(예비\)/;
+  if(m.pre){
+    if(PRE.test(head+" "+(it.tags||[]).join(" ")))add(["ok","예비창업자 대상"]);
+    else if(/창업/.test(head))add(["chk","사업자등록 전에도 신청할 수 있는지 공고문 확인"]);
+    else add(["no","사업자등록을 한 사업자 대상"]);
+  }else{
+    if(PRE.test(head)&&!EXIST.test(head.replace(PRE,"")))add(["no","사업자등록 전 예비창업자만 대상"]);
+    if(BIG.test(it.target||"")&&!SME.test(it.target||"")&&!SS.test(it.target||""))add(["no","중견·대기업 대상"]);
+    else if(SS.test(head)&&!SME.test(head))add(m.ss?["ok","소상공인 대상"]:["no",`소상공인만 대상 (현재 ${m.grade})`]);
+    else if(SME.test(head)&&!m.sme)add(["no",`중소기업만 대상 (현재 ${m.grade})`]);
+  }
   const D=it._d||{};
   if(m.x){
     const inExcl=(D.excl||[]).some(w=>m.xn.includes(w)||w===m.xn||(m.x==="health"&&/보건|의료|의원|병원/.test(w))||(m.x==="pharm"&&/약국|보건/.test(w)));
@@ -1046,9 +1058,9 @@ function fitNotice(it,m){
   return {st,why};
 }
 function myFit(){
-  const d=IND[+$("ind").value],u=SUB[d.k][+$("sub").value]||SUB[d.k][0];
+  const d=IND[+$("ind").value],u=SUB[d.k][+$("sub").value]||SUB[d.k][0],S=read();
   const on=id=>!!($(id)&&$(id).checked);
-  return {k:d.k,c:u.c,x:u.x&&u.x!==""?u.x:"",xn:u.x?u.n.split(",")[0]:"",emp:Math.max(0,Math.floor(+$("emp").value||0)),yrs:+$("yrs").value,
+  return {ss:S.ss,sme:S.sme,pre:S.pre,grade:GRADE(S),k:d.k,c:u.c,x:u.x&&u.x!==""?u.x:"",xn:u.x?u.n.split(",")[0]:"",emp:Math.max(0,Math.floor(+$("emp").value||0)),yrs:+$("yrs").value,
     youth:on("youth"),woman:on("woman"),disabled:on("disabled"),hire:on("hire"),hireYouth:on("hireYouth"),staffUp:on("staffUp"),
     leave:on("leave"),close:on("close"),credit:on("credit"),drop:on("drop"),debtTrouble:on("debtTrouble")};
 }
@@ -1088,13 +1100,11 @@ function renderNotices(){
   const soonLimit=new Date(Date.now()+(9*3600e3)+14*864e5).toISOString().slice(0,10);
   const region=$("region").value,q=$("nq").value.trim().toLowerCase(),pre=$("yrs").value==="-1";
   $("nregion").value=region;
-  $("nsmallTxt").textContent=pre?"예비창업자 대상만":"소상공인 대상만";
   NOTICE.items.forEach(it=>{if(it.regions.length>=10)it.regions=[]}); // 17개 시·도가 다 붙은 옛 데이터는 전국으로
   const me=myFit(),hideNo=$("nfit").checked,onlyMoney=$("nmoney").checked,sort=$("nsort").value;let hidden=0;
   NOTICE.items.forEach(it=>{it._d=(DETAIL&&DETAIL[it.id])||null;it._fit=fitNotice(it,me)});
   const rows=NOTICE.items.filter(it=>
     (!region||!it.regions.length||it.regions.includes(region))&&
-    (!$("nsmall").checked||(pre?/예비/.test([it.title,it.target,(it.tags||[]).join(" ")].join(" ")):it.forSmall))&&
     (!$("nsoon").checked||(it.end&&it.end<=soonLimit))&&
     (!q||[it.title,it.org,it.target,it.summary,(it.tags||[]).join(" ")].join(" ").toLowerCase().includes(q))&&
     (!onlyMoney||sure(it._d,"amt")||sure(it._d,"loan"))&&
@@ -1134,7 +1144,7 @@ function renderNotices(){
 }
 $("nregion").innerHTML=$("region").innerHTML;$("nregion").options[0].textContent="전체 지역";
 $("nregion").addEventListener("input",()=>{$("region").value=$("nregion").value;resetNS();render();renderNotices()});
-["nq","nsoon","nsmall","nfit","nmoney","nsort"].forEach(id=>$(id).addEventListener("input",()=>{resetNS();renderNotices()}));
+["nq","nsoon","nfit","nmoney","nsort"].forEach(id=>$(id).addEventListener("input",()=>{resetNS();renderNotices()}));
 ["input","change"].forEach(ev=>$("f").addEventListener(ev,()=>{resetNS();renderNotices()}));
 $("nList").addEventListener("click",e=>{const b=e.target.closest("[data-more]");if(b){NS[b.dataset.more]+=5;renderNotices();return}
   const d=e.target.closest("[data-det]");if(d){const id=d.dataset.det;NDET.has(id)?NDET.delete(id):NDET.add(id);renderNotices()}});
