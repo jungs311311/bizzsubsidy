@@ -40,6 +40,15 @@ body{margin:0}
 .dday.open{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .ncard.fit-no{opacity:.72}
+.nsec{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.nsec>summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;font-size:15.5px}
+.nsec>summary b{font-weight:600}
+.nsec>.list{margin-top:10px}
+.nsec>.more{margin-top:10px}
+.nsec-soon{border-color:var(--warn)}
+.nsec-budget,.nsec-always{background:var(--bg)}
+.newb{display:inline-block;vertical-align:2px;font-family:var(--f-num);font-size:11px;font-weight:600;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 5px;margin-right:6px}
+.dday.budget{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
 .fit{display:flex;flex-wrap:wrap;gap:4px 10px;margin:0;padding:0;list-style:none;font-size:13px;line-height:1.45}
 .fit li{display:flex;gap:4px}
 .fit .ok{color:var(--accent)}.fit .chk{color:var(--warn)}.fit .no{color:var(--off)}
@@ -279,7 +288,7 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
           <label class="chk"><input type="checkbox" id="nsmall" checked> <span id="nsmallTxt">소상공인 대상만</span></label>
           <label class="chk"><input type="checkbox" id="nfit" checked> 내 조건에 안 맞는 공고 숨기기</label>
           <label class="chk"><input type="checkbox" id="nmoney"> 지원 금액 나온 것만</label>
-          <select id="nsort" class="nsort" aria-label="정렬"><option value="end">마감 가까운 순</option><option value="amt">지원 금액 큰 순</option><option value="loan">대출 한도 큰 순</option><option value="new">최근 올라온 순</option></select>
+          <select id="nsort" class="nsort" aria-label="정렬"><option value="new" selected>최근 올라온 순</option><option value="end">마감 가까운 순</option><option value="amt">지원 금액 큰 순</option><option value="loan">대출 한도 큰 순</option></select>
         </div>
         <p class="hint" style="margin:0">공고 제목과 대상의 단어로 내 업종·상황과 맞는지 자동으로 표시해요. ✓ 맞음 · ? 공고문 확인 · ✕ 안 맞음. 단어만 보는 거라 틀릴 수 있으니, 신청 전에는 공고문을 꼭 확인하세요.</p>
         <div class="list" id="nList"></div>
@@ -950,9 +959,15 @@ render();
 const esc=t=>String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const safeUrl=u=>/^https?:\/\//.test(u||"")?u:"";
 let NOTICE=null,nShown=20;
+// 새 공고 네 칸: 곧 마감(7일 안) / 마감 있는 공고 / 예산 소진 시 / 상시
+const NSEC=[["soon","곧 마감","7일 안에 끝나는 공고 · 마감 가까운 순"],["dl","마감 있는 공고","정렬 메뉴 순서대로"],["budget","예산 소진 시까지","예산이 떨어지면 끝나요 · 빨리 신청할수록 유리"],["always","상시 접수","언제든 신청"]];
+let NS={},NOPEN={soon:true,dl:true,budget:false,always:false};
+const resetNS=()=>{NS={soon:10,dl:10,budget:10,always:10}};resetNS();
+// 마감일 없는 공고 중 '예산 소진·선착순·모집 완료 시' 같이 빨리 끝날 수 있는 것
+const isBudget=it=>/예산|소진|선착순|모집\s*(완료|마감)|조기\s*마감/.test(it.period||"");
 function dday(it,today){
   if(it.start&&it.start>today)return ["",`접수 예정 ${it.start.slice(5).replace("-",".")}`];
-  if(!it.end)return ["open","상시·예산 소진 시"];
+  if(!it.end)return isBudget(it)?["budget","예산 소진 시 마감"]:["open","상시"];
   const d=Math.round((new Date(it.end)-new Date(today))/864e5);
   return [d<=14?"soon":"open",d===0?"오늘 마감":`D-${d}`];
 }
@@ -1072,26 +1087,37 @@ function renderNotices(){
     (!onlyMoney||sure(it._d,"amt")||sure(it._d,"loan"))&&
     (!hideNo||it._fit.st!=="no"||(hidden++,false)));
   const SK={amt:it=>-sure(it._d,"amt"),loan:it=>-sure(it._d,"loan"),new:it=>-(+new Date(it.created||0)||0),end:it=>it.end?+new Date(it.end):9e15};
-  rows.sort((a,b)=>SK[sort](a)-SK[sort](b)||(SK.end(a)-SK.end(b)));
+  const by=(a,b)=>SK[sort](a)-SK[sort](b)||(SK.end(a)-SK.end(b));
+  const lim7=new Date(Date.now()+9*3600e3+7*864e5).toISOString().slice(0,10),new7=new Date(Date.now()+9*3600e3-7*864e5).toISOString().slice(0,10);
+  const G={soon:[],dl:[],budget:[],always:[]};
+  rows.forEach(it=>G[it.end?(it.end<=lim7?"soon":"dl"):(isBudget(it)?"budget":"always")].push(it));
+  G.soon.sort((a,b)=>SK.end(a)-SK.end(b));["dl","budget","always"].forEach(k=>G[k].sort(by));
   $("nCount").hidden=false;$("nCount").textContent=`${rows.length}건`+(hidden?` · 안 맞는 ${hidden}건 숨김`:"");
-  box.innerHTML=rows.length?rows.slice(0,nShown).map(it=>{const [cls,txt]=dday(it,today);const url=safeUrl(it.url);
-    const F=it._fit,MK={ok:"✓",chk:"?",no:"✕"};
+  const card=it=>{const [cls,txt]=dday(it,today);const url=safeUrl(it.url);
+    const F=it._fit,MK={ok:"✓",chk:"?",no:"✕"},nb=(it.created||"")>=new7?`<span class="newb">NEW</span>`:"";
     return `<article class="ncard fit-${F.st}">
-      <div class="card-top"><h3>${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(rtitle(it))}</a>`:esc(rtitle(it))}</h3><span class="dday ${cls}">${txt}</span></div>
-      <div class="meta">${[it.org,it.execOrg!==it.org?it.execOrg:"",it.period].filter(Boolean).map(esc).join(" · ")}</div>
+      <div class="card-top"><h3>${nb}${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(rtitle(it))}</a>`:esc(rtitle(it))}</h3><span class="dday ${cls}">${txt}</span></div>
+      <div class="meta">${[it.org,it.execOrg!==it.org?it.execOrg:"",it.period,it.created?`${it.created.slice(5).replace("-","/")} 올라옴`:""].filter(Boolean).map(esc).join(" · ")}</div>
       ${moneyLine(it._d)}
       <ul class="fit">${F.why.map(w=>`<li class="${w[0]}"><span>${MK[w[0]]}</span>${esc(w[1])}</li>`).join("")}</ul>
       ${it.summary?`<p class="why">${esc(it.summary)}</p>`:""}
       ${detailBox(it._d)}
       <div class="chips">${(it.regions.length?it.regions:["전국"]).map(r=>`<span class="cat">${esc(r)}</span>`).join("")}${it.field?`<span class="cat">${esc(it.field)}</span>`:""}${it.target?`<span class="cat">대상: ${esc(it.target)}</span>`:""}</div>
-    </article>`}).join(""):`<p class="empty">조건에 맞는 공고가 없어요. 검색어나 지역을 바꿔 보세요.</p>`;
-  $("nMore").hidden=rows.length<=nShown;
+    </article>`};
+  const SORTLAB={new:"최근 올라온 순",end:"마감 가까운 순",amt:"지원 금액 큰 순",loan:"대출 한도 큰 순"};
+  box.innerHTML=rows.length?NSEC.filter(([k])=>G[k].length).map(([k,t,sub],i)=>{const L=G[k];
+    return `<details class="nsec nsec-${k}" data-k="${k}"${NOPEN[k]?" open":""}><summary><b>${i+1}. ${t}</b><span class="pill ${k==="soon"?"check":"sit"}">${L.length}건</span><span class="hint">${k==="dl"?SORTLAB[sort]:sub}</span></summary>
+      <div class="list">${L.slice(0,NS[k]).map(card).join("")}</div>
+      ${L.length>NS[k]?`<button type="button" class="more" data-more="${k}">더 보기 (${L.length-NS[k]}건 남음)</button>`:""}</details>`}).join("")
+    :`<p class="empty">조건에 맞는 공고가 없어요. 검색어나 지역을 바꿔 보세요.</p>`;
+  $("nMore").hidden=true;
 }
 $("nregion").innerHTML=$("region").innerHTML;$("nregion").options[0].textContent="전체 지역";
-$("nregion").addEventListener("input",()=>{$("region").value=$("nregion").value;nShown=20;render();renderNotices()});
-["nq","nsoon","nsmall","nfit","nmoney","nsort"].forEach(id=>$(id).addEventListener("input",()=>{nShown=20;renderNotices()}));
-["input","change"].forEach(ev=>$("f").addEventListener(ev,()=>{nShown=20;renderNotices()}));
-$("nMore").addEventListener("click",()=>{nShown+=20;renderNotices()});
+$("nregion").addEventListener("input",()=>{$("region").value=$("nregion").value;resetNS();render();renderNotices()});
+["nq","nsoon","nsmall","nfit","nmoney","nsort"].forEach(id=>$(id).addEventListener("input",()=>{resetNS();renderNotices()}));
+["input","change"].forEach(ev=>$("f").addEventListener(ev,()=>{resetNS();renderNotices()}));
+$("nList").addEventListener("click",e=>{const b=e.target.closest("[data-more]");if(b){NS[b.dataset.more]+=20;renderNotices()}});
+$("nList").addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.k)NOPEN[d.dataset.k]=d.open},true);
 // ---- 창업 전 지원 탭 (구글 시트 '창업 전 지원' 탭 → data/sheet.json의 pre) ----
 let PRE=[],pnShown=15;
 const FLAB={기술:"기술·지식서비스",음식:"음식점·카페",생활:"소매·생활서비스",농업:"농업",사회:"사회적 목적"};
