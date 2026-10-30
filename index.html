@@ -113,6 +113,9 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
 .why{font-size:13.5px;color:var(--muted);margin:0}
 .card a{font-size:13.5px;color:var(--accent);font-weight:600;text-decoration:none;word-break:break-all}
 .card a:hover,.card a:focus-visible{text-decoration:underline}
+.kind{font-size:11.5px;font-weight:600;border-radius:4px;padding:0 6px;white-space:nowrap}
+.kind.law{background:var(--accent-soft);color:var(--accent)}
+.kind.notice{background:var(--warn-soft);color:var(--warn)}
 .cat{font-size:11.5px;letter-spacing:.04em;border:1px solid var(--line);border-radius:4px;padding:0 6px;color:var(--muted);white-space:nowrap}
 .empty{color:var(--muted);font-size:14px;padding:12px 0}
 .alert{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5}
@@ -930,18 +933,20 @@ function render(){
   const grp2=g=>grp(g).sort((a,b)=>CLOSED(a)-CLOSED(b));
   const yes=grp2("yes"),chk=grp2("check"),sit=grp("sit"),no=grp("no");
   const MK={ok:"✓",chk:"?",no:"✕",na:"–"};
+  // 상시(언제든 신청) / 공고(모집 공고가 나와야 신청) 표시
+  const KIND=p=>{const L=LIVE(p);return L?(L.kind==="law"?`<span class="kind law" title="공고 없이 조건만 맞으면 언제든 신청">상시</span>`:`<span class="kind notice" title="모집 공고가 나와야 신청">공고 있을 때</span>`):""};
   const AMT=p=>typeof p.amt==="function"?p.amt(s):p.amt;
   const badge=([lab,[st,why]])=>`<span class="sb ${st}" title="${why||""}">${lab} ${MK[st]}</span>`;
   const card=x=>`
     <article class="card ${x.g}">
-      <div class="card-top"><h3>${x.p.name}${CLOSED(x)?` <span class="closed">${LIVE(x.p)?"지금 접수 중인 공고 없음":"2026년 접수 끝남"} · 다음 공고 대기</span>`:""}</h3><span class="cats">${x.p.tag?`<span class="cat">${x.p.tag}</span>`:""}<span class="cat">${x.p.cat}</span></span></div>
+      <div class="card-top"><h3>${x.p.name}${CLOSED(x)?` <span class="closed">${LIVE(x.p)?"지금 접수 중인 공고 없음":"2026년 접수 끝남"} · 다음 공고 대기</span>`:""}</h3><span class="cats">${KIND(x.p)}${x.p.tag?`<span class="cat">${x.p.tag}</span>`:""}<span class="cat">${x.p.cat}</span></span></div>
       <div class="meta">${x.p.org} · <span class="amt">${AMT(x.p)}</span>${CLOSED(x)?LOCAL(x):WHEN(x)}</div>
       <div class="steps">${x.steps.map(badge).join("")}</div>
       ${x.need?`<p class="need"><b>확인할 것</b>${x.need.join(" · ")}</p>`:""}
       <p class="why">${x.p.about}</p>
       <a href="${x.p.url}" target="_blank" rel="noopener">${x.p.url.replace(/^https:\/\//,"")} →</a>
     </article>`;
-  const row=(x,tag)=>`<div class="row"><div class="rname"><b>${x.p.name}</b><span class="meta">${AMT(x.p)}${CLOSED(x)?" · 지금 접수 중인 공고 없음":WHEN(x)}</span></div><div class="rwhy">${tag}<span>${x.why}</span></div></div>`;
+  const row=(x,tag)=>`<div class="row"><div class="rname"><b>${x.p.name}</b>${KIND(x.p)}<span class="meta">${AMT(x.p)}${CLOSED(x)?" · 지금 접수 중인 공고 없음":WHEN(x)}</span></div><div class="rwhy">${tag}<span>${x.why}</span></div></div>`;
   $("jTotal").textContent=`전체 ${P.length}개`;
   $("jSum").innerHTML=`<span class="pill yes">받을 수 있어요 ${yes.length}</span><span class="pill check">확인하면 가능 ${chk.length}</span><span class="pill sit">상황에 맞으면 가능 ${sit.length}</span><span class="pill no">받을 수 없어요 ${no.length}</span>`;
   $("hYes").hidden=!yes.length;$("gYes").innerHTML=yes.map(card).join("");
