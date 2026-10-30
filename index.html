@@ -11,16 +11,17 @@
 :root{
   --bg:#F3F5F4; --paper:#FFFFFF; --ink:#17201E; --muted:#5B6964; --line:#D9E0DD;
   --accent:#1E6A56; --accent-soft:#E2EFEA; --warn:#9A5B07; --warn-soft:#FBF0DD; --off:#8A9590;
+  --info:#185FA5; --info-soft:#E6F1FB;
   --f-display:"Gowun Batang","Noto Serif KR",serif;
   --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --f-num:"IBM Plex Mono",ui-monospace,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#111816; --paper:#18211E; --ink:#E6ECEA; --muted:#9AA8A3; --line:#2B3733;
-  --accent:#5FC0A1; --accent-soft:#1D332C; --warn:#E5AE5C; --warn-soft:#33281A; --off:#6E7B76; color-scheme:dark}}
+  --accent:#5FC0A1; --accent-soft:#1D332C; --warn:#E5AE5C; --warn-soft:#33281A; --off:#6E7B76; --info:#85B7EB; --info-soft:#0C2A47; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#111816; --paper:#18211E; --ink:#E6ECEA; --muted:#9AA8A3; --line:#2B3733;
-  --accent:#5FC0A1; --accent-soft:#1D332C; --warn:#E5AE5C; --warn-soft:#33281A; --off:#6E7B76; color-scheme:dark}
+  --accent:#5FC0A1; --accent-soft:#1D332C; --warn:#E5AE5C; --warn-soft:#33281A; --off:#6E7B76; --info:#85B7EB; --info-soft:#0C2A47; color-scheme:dark}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0}
@@ -48,7 +49,12 @@ body{margin:0}
 .nsec-soon{border-color:var(--warn)}
 .nsec-budget,.nsec-always{background:var(--bg)}
 .newb{display:inline-block;vertical-align:2px;font-family:var(--f-num);font-size:11px;font-weight:600;color:var(--accent);border:1px solid var(--accent);border-radius:4px;padding:0 5px;margin-right:6px}
-.dday.budget{background:var(--warn-soft);color:var(--warn);border-color:var(--warn-soft)}
+.dday.budget{background:transparent;color:var(--muted);border-color:var(--muted)}
+.dday.always{background:var(--info-soft);color:var(--info);border-color:var(--info-soft)}
+.ncard.sum{gap:3px;padding:10px 14px}
+.ncard .det{justify-self:start;font:inherit;font-size:12.5px;font-weight:600;color:var(--accent);background:none;border:0;padding:0;cursor:pointer}
+.ncard .det:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ncard .body{display:grid;gap:6px;margin-top:4px;padding-top:8px;border-top:1px dashed var(--line)}
 .fit{display:flex;flex-wrap:wrap;gap:4px 10px;margin:0;padding:0;list-style:none;font-size:13px;line-height:1.45}
 .fit li{display:flex;gap:4px}
 .fit .ok{color:var(--accent)}.fit .chk{color:var(--warn)}.fit .no{color:var(--off)}
@@ -114,8 +120,9 @@ select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
 .card a{font-size:13.5px;color:var(--accent);font-weight:600;text-decoration:none;word-break:break-all}
 .card a:hover,.card a:focus-visible{text-decoration:underline}
 .kind{font-size:11.5px;font-weight:600;border-radius:4px;padding:0 6px;white-space:nowrap}
-.kind.law{background:var(--accent-soft);color:var(--accent)}
-.kind.notice{background:var(--warn-soft);color:var(--warn)}
+.kind{border-radius:999px;padding:1px 9px;border:1px solid transparent;font-family:var(--f-num);font-weight:500;font-size:12px}
+.kind.law{background:var(--info-soft);color:var(--info);border-color:var(--info-soft)}
+.kind.notice{background:transparent;color:var(--muted);border-color:var(--line)}
 .cat{font-size:11.5px;letter-spacing:.04em;border:1px solid var(--line);border-radius:4px;padding:0 6px;color:var(--muted);white-space:nowrap}
 .empty{color:var(--muted);font-size:14px;padding:12px 0}
 .alert{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5}
@@ -966,13 +973,14 @@ const safeUrl=u=>/^https?:\/\//.test(u||"")?u:"";
 let NOTICE=null,nShown=20;
 // 새 공고 네 칸: 곧 마감(7일 안) / 마감 있는 공고 / 예산 소진 시 / 상시
 const NSEC=[["soon","곧 마감","7일 안에 끝나는 공고 · 마감 가까운 순"],["dl","마감 있는 공고","정렬 메뉴 순서대로"],["budget","예산 소진 시까지","예산이 떨어지면 끝나요 · 빨리 신청할수록 유리"],["always","상시 접수","언제든 신청"]];
-let NS={},NOPEN={soon:true,dl:true,budget:false,always:false};
-const resetNS=()=>{NS={soon:10,dl:10,budget:10,always:10}};resetNS();
+let NS={},NOPEN={soon:true,dl:true,budget:true,always:true};
+const resetNS=()=>{NS={soon:5,dl:5,budget:5,always:5}};resetNS();
+const NDET=new Set(); // 자세히 펼친 공고 id
 // 마감일 없는 공고 중 '예산 소진·선착순·모집 완료 시' 같이 빨리 끝날 수 있는 것
 const isBudget=it=>/예산|소진|선착순|모집\s*(완료|마감)|조기\s*마감/.test(it.period||"");
 function dday(it,today){
   if(it.start&&it.start>today)return ["",`접수 예정 ${it.start.slice(5).replace("-",".")}`];
-  if(!it.end)return isBudget(it)?["budget","예산 소진 시 마감"]:["open","상시"];
+  if(!it.end)return isBudget(it)?["budget","예산 소진 시 마감"]:["always","상시"];
   const d=Math.round((new Date(it.end)-new Date(today))/864e5);
   return [d<=14?"soon":"open",d===0?"오늘 마감":`D-${d}`];
 }
@@ -1098,22 +1106,29 @@ function renderNotices(){
   rows.forEach(it=>G[it.end?(it.end<=lim7?"soon":"dl"):(isBudget(it)?"budget":"always")].push(it));
   G.soon.sort((a,b)=>SK.end(a)-SK.end(b));["dl","budget","always"].forEach(k=>G[k].sort(by));
   $("nCount").hidden=false;$("nCount").textContent=`${rows.length}건`+(hidden?` · 안 맞는 ${hidden}건 숨김`:"");
-  const card=it=>{const [cls,txt]=dday(it,today);const url=safeUrl(it.url);
-    const F=it._fit,MK={ok:"✓",chk:"?",no:"✕"},nb=(it.created||"")>=new7?`<span class="newb">NEW</span>`:"";
-    return `<article class="ncard fit-${F.st}">
+  const FITW={ok:"✓ 내 조건 맞음",chk:"? 공고문 확인",no:"✕ 안 맞음"};
+  const card=it=>{const [cls,txt]=dday(it,today);const url=safeUrl(it.url),D=it._d;
+    const F=it._fit,MK={ok:"✓",chk:"?",no:"✕"},nb=(it.created||"")>=new7?`<span class="newb">NEW</span>`:"",open=NDET.has(it.id);
+    const money=sure(D,"amt")?`최대 ${D.amtText}`:sure(D,"loan")?`대출 한도 ${D.loanText}`:"";
+    const line=[it.execOrg||it.org,it.created?`${it.created.slice(5).replace("-","/")} 올라옴`:"",money].filter(Boolean).map(esc).join(" · ");
+    return `<article class="ncard sum fit-${F.st}">
       <div class="card-top"><h3>${nb}${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(rtitle(it))}</a>`:esc(rtitle(it))}</h3><span class="dday ${cls}">${txt}</span></div>
-      <div class="meta">${[it.org,it.execOrg!==it.org?it.execOrg:"",it.period,it.created?`${it.created.slice(5).replace("-","/")} 올라옴`:""].filter(Boolean).map(esc).join(" · ")}</div>
-      ${moneyLine(it._d)}
-      <ul class="fit">${F.why.map(w=>`<li class="${w[0]}"><span>${MK[w[0]]}</span>${esc(w[1])}</li>`).join("")}</ul>
-      ${it.summary?`<p class="why">${esc(it.summary)}</p>`:""}
-      ${detailBox(it._d)}
-      <div class="chips">${(it.regions.length?it.regions:["전국"]).map(r=>`<span class="cat">${esc(r)}</span>`).join("")}${it.field?`<span class="cat">${esc(it.field)}</span>`:""}${it.target?`<span class="cat">대상: ${esc(it.target)}</span>`:""}</div>
+      <div class="meta">${line} · <span style="color:var(--${{ok:"accent",chk:"warn",no:"off"}[F.st]})">${FITW[F.st]}</span></div>
+      <button type="button" class="det" data-det="${esc(it.id)}" aria-expanded="${open}">${open?"접기 ▴":"자세히 ▾"}</button>
+      ${open?`<div class="body">
+        <div class="meta">${[it.org,it.execOrg!==it.org?it.execOrg:"",it.period].filter(Boolean).map(esc).join(" · ")}</div>
+        ${moneyLine(D)}
+        <ul class="fit">${F.why.map(w=>`<li class="${w[0]}"><span>${MK[w[0]]}</span>${esc(w[1])}</li>`).join("")}</ul>
+        ${it.summary?`<p class="why">${esc(it.summary)}</p>`:""}
+        ${detailBox(D)}
+        <div class="chips">${(it.regions.length?it.regions:["전국"]).map(r=>`<span class="cat">${esc(r)}</span>`).join("")}${it.field?`<span class="cat">${esc(it.field)}</span>`:""}${it.target?`<span class="cat">대상: ${esc(it.target)}</span>`:""}</div>
+      </div>`:""}
     </article>`};
   const SORTLAB={new:"최근 올라온 순",end:"마감 가까운 순",amt:"지원 금액 큰 순",loan:"대출 한도 큰 순"};
   box.innerHTML=rows.length?NSEC.filter(([k])=>G[k].length).map(([k,t,sub],i)=>{const L=G[k];
     return `<details class="nsec nsec-${k}" data-k="${k}"${NOPEN[k]?" open":""}><summary><b>${i+1}. ${t}</b><span class="pill ${k==="soon"?"check":"sit"}">${L.length}건</span><span class="hint">${k==="dl"?SORTLAB[sort]:sub}</span></summary>
       <div class="list">${L.slice(0,NS[k]).map(card).join("")}</div>
-      ${L.length>NS[k]?`<button type="button" class="more" data-more="${k}">더 보기 (${L.length-NS[k]}건 남음)</button>`:""}</details>`}).join("")
+      ${L.length>NS[k]?`<button type="button" class="more" data-more="${k}">5개 더 보기 (${L.length-NS[k]}건 남음)</button>`:""}</details>`}).join("")
     :`<p class="empty">조건에 맞는 공고가 없어요. 검색어나 지역을 바꿔 보세요.</p>`;
   $("nMore").hidden=true;
 }
@@ -1121,7 +1136,8 @@ $("nregion").innerHTML=$("region").innerHTML;$("nregion").options[0].textContent
 $("nregion").addEventListener("input",()=>{$("region").value=$("nregion").value;resetNS();render();renderNotices()});
 ["nq","nsoon","nsmall","nfit","nmoney","nsort"].forEach(id=>$(id).addEventListener("input",()=>{resetNS();renderNotices()}));
 ["input","change"].forEach(ev=>$("f").addEventListener(ev,()=>{resetNS();renderNotices()}));
-$("nList").addEventListener("click",e=>{const b=e.target.closest("[data-more]");if(b){NS[b.dataset.more]+=20;renderNotices()}});
+$("nList").addEventListener("click",e=>{const b=e.target.closest("[data-more]");if(b){NS[b.dataset.more]+=5;renderNotices();return}
+  const d=e.target.closest("[data-det]");if(d){const id=d.dataset.det;NDET.has(id)?NDET.delete(id):NDET.add(id);renderNotices()}});
 $("nList").addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.k)NOPEN[d.dataset.k]=d.open},true);
 // ---- 창업 전 지원 탭 (구글 시트 '창업 전 지원' 탭 → data/sheet.json의 pre) ----
 let PRE=[],pnShown=15;
