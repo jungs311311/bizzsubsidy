@@ -1250,7 +1250,8 @@ function applySheet(S){
     d.small=r.small;d.mid=r.mid;d.ss=r.ss;if(r.n)d.n=r.n;d.note=r.note||undefined});
   (S.programs||[]).forEach(r=>{
     let p=P.find(x=>x.name===r.name);
-    if(!p){if(!r.amt||!r.about)return;p={name:r.name,ind:"sheet",size:"any",cat:"받는 돈"};P.push(p)}
+    // 시트로 추가된 지원: 정책자금 제외 업종은 중기부·소진공 사업에만 적용 (고용노동부 장려금 등은 업종 제한 없음)
+    if(!p){if(!r.amt||!r.about)return;p={name:r.name,ind:/중소벤처기업부|소상공인시장진흥공단|소진공/.test(r.org||"")?"sheet":"none",size:"any",cat:"받는 돈"};P.push(p)}
     if(r.org)p.org=r.org;if(r.cat)p.cat=r.cat;if(r.size&&SIZES[r.size])p.size=r.size;
     p.tag=r.tag||undefined;p.when=r.when||undefined;p.extra=r.extra||undefined;p.hide=r.show==="N";
     if(r.amt&&!/^\(자동/.test(r.amt))p.amt=r.amt;if(r.about)p.about=r.about;if(r.url)p.url=r.url});
