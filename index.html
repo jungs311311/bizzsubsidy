@@ -87,7 +87,7 @@ select,input[type=number]{width:100%;font:inherit;color:var(--ink);background:va
 select:focus,input:focus{outline:2px solid var(--accent);outline-offset:1px}
 .hint{font-size:12.5px;color:var(--muted)}
 .hint b{font-family:var(--f-num);color:var(--ink);font-weight:500}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
 .checks{display:grid;gap:8px}
 .chk{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;font-size:14px;line-height:1.45}
 .chk input{margin-top:3px;accent-color:var(--accent);width:16px;height:16px;flex:none}
@@ -221,13 +221,12 @@ details.grp summary span{font-family:var(--f-num);color:var(--muted);font-weight
         <div class="field">
           <label for="yrs">업력</label>
           <select id="yrs">
-            <option value="-1">예비창업자 (사업자등록 전)</option>
             <option value="0">1년 미만</option>
             <option value="1">1~3년</option>
             <option value="3" selected>3~7년</option>
             <option value="7">7년 이상</option>
           </select>
-          <div class="hint">사업자등록 전이면 <a href="#pre" style="color:var(--accent)">창업 전 지원</a> 탭에서 더 자세히 볼 수 있어요.</div>
+          <div class="hint">사업자등록 전이면 <a href="#pre" style="color:var(--accent)">창업 전 지원</a> 탭을 보세요.</div>
         </div>
       </div>
       <div class="field">
@@ -924,7 +923,7 @@ function render(){
   document.querySelectorAll("#exTbody tr").forEach(tr=>tr.classList.toggle("hl",!!s.ex&&tr.dataset.id===s.ex.id));
 
   // 지원 판정: 모든 지원을 네 묶음 중 하나로
-  const J=P.filter(p=>!p.hide).map(p=>({p,...judge(p,s)}));
+  const J=P.filter(p=>!p.hide&&p.pre!==1).map(p=>({p,...judge(p,s)})); // 예비창업자 전용은 창업 전 탭에서
   const grp=g=>J.filter(x=>x.g===g);
   // 매일 아침 기업마당 공고로 계산한 접수 상태 (data/status.json). 없으면 적어 둔 접수 시기를 씀
   const LIVE=p=>{const st=STATUS&&STATUS.programs&&STATUS.programs[p.name];if(!st)return null;
@@ -956,7 +955,7 @@ function render(){
       <a href="${x.p.url}" target="_blank" rel="noopener">${x.p.url.replace(/^https:\/\//,"")} →</a>
     </article>`;
   const row=(x,tag)=>`<div class="row"><div class="rname"><b>${x.p.name}</b>${KIND(x.p)}<span class="meta">${AMT(x.p)}${CLOSED(x)?" · 지금 접수 중인 공고 없음":WHEN(x)}</span></div><div class="rwhy">${tag}<span>${x.why}</span></div></div>`;
-  $("jTotal").textContent=`전체 ${P.length}개`;
+  $("jTotal").textContent=`전체 ${J.length}개`;
   $("jSum").innerHTML=`<span class="pill yes">받을 수 있어요 ${yes.length}</span><span class="pill check">확인하면 가능 ${chk.length}</span><span class="pill sit">상황에 맞으면 가능 ${sit.length}</span><span class="pill no">받을 수 없어요 ${no.length}</span>`;
   $("hYes").hidden=!yes.length;$("gYes").innerHTML=yes.map(card).join("");
   $("hChk").hidden=!chk.length;$("gChk").innerHTML=chk.map(card).join("");
