@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-11-23T10:09+09:00",
+ "updatedAt": "2026-11-24T14:00+09:00",
  "programs": {
   "소상공인 경영안정 바우처": {
    "kind": "notice",
@@ -367,18 +367,7 @@
   },
   "일반경영안정자금": {
    "kind": "notice",
-   "national": [
-    {
-     "id": "PBLN_000000000126965",
-     "title": "2026년 중소벤처기업부 소상공인 정책자금 융자사업 5차 변경 공고",
-     "url": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000126965",
-     "org": "중소벤처기업부",
-     "start": null,
-     "end": null,
-     "period": "예산 소진시까지",
-     "regions": []
-    }
-   ],
+   "national": [],
    "local": [
     {
      "id": "PBLN_000000000120023",
@@ -408,18 +397,7 @@
   },
   "청년고용연계자금": {
    "kind": "notice",
-   "national": [
-    {
-     "id": "PBLN_000000000126965",
-     "title": "2026년 중소벤처기업부 소상공인 정책자금 융자사업 5차 변경 공고",
-     "url": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000126965",
-     "org": "중소벤처기업부",
-     "start": null,
-     "end": null,
-     "period": "예산 소진시까지",
-     "regions": []
-    }
-   ],
+   "national": [],
    "local": [
     {
      "id": "PBLN_000000000120023",
@@ -449,18 +427,7 @@
   },
   "신용취약소상공인자금": {
    "kind": "notice",
-   "national": [
-    {
-     "id": "PBLN_000000000126965",
-     "title": "2026년 중소벤처기업부 소상공인 정책자금 융자사업 5차 변경 공고",
-     "url": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000126965",
-     "org": "중소벤처기업부",
-     "start": null,
-     "end": null,
-     "period": "예산 소진시까지",
-     "regions": []
-    }
-   ],
+   "national": [],
    "local": [
     {
      "id": "PBLN_000000000120023",
@@ -490,18 +457,7 @@
   },
   "소상공인 대환대출": {
    "kind": "notice",
-   "national": [
-    {
-     "id": "PBLN_000000000126965",
-     "title": "2026년 중소벤처기업부 소상공인 정책자금 융자사업 5차 변경 공고",
-     "url": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000126965",
-     "org": "중소벤처기업부",
-     "start": null,
-     "end": null,
-     "period": "예산 소진시까지",
-     "regions": []
-    }
-   ],
+   "national": [],
    "local": [
     {
      "id": "PBLN_000000000120023",
@@ -531,18 +487,7 @@
   },
   "긴급경영안정자금 (재해 피해)": {
    "kind": "notice",
-   "national": [
-    {
-     "id": "PBLN_000000000126965",
-     "title": "2026년 중소벤처기업부 소상공인 정책자금 융자사업 5차 변경 공고",
-     "url": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000126965",
-     "org": "중소벤처기업부",
-     "start": null,
-     "end": null,
-     "period": "예산 소진시까지",
-     "regions": []
-    }
-   ],
+   "national": [],
    "local": [
     {
      "id": "PBLN_000000000120138",
@@ -596,18 +541,7 @@
   },
   "긴급경영안정자금 (일시적 경영애로)": {
    "kind": "notice",
-   "national": [
-    {
-     "id": "PBLN_000000000126965",
-     "title": "2026년 중소벤처기업부 소상공인 정책자금 융자사업 5차 변경 공고",
-     "url": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000126965",
-     "org": "중소벤처기업부",
-     "start": null,
-     "end": null,
-     "period": "예산 소진시까지",
-     "regions": []
-    }
-   ],
+   "national": [],
    "local": [
     {
      "id": "PBLN_000000000120023",
@@ -668,18 +602,7 @@
   },
   "재도전특별자금": {
    "kind": "notice",
-   "national": [
-    {
-     "id": "PBLN_000000000126965",
-     "title": "2026년 중소벤처기업부 소상공인 정책자금 융자사업 5차 변경 공고",
-     "url": "https://www.bizinfo.go.kr/sii/siia/selectSIIA200Detail.do?pblancId=PBLN_000000000126965",
-     "org": "중소벤처기업부",
-     "start": null,
-     "end": null,
-     "period": "예산 소진시까지",
-     "regions": []
-    }
-   ],
+   "national": [],
    "local": [
     {
      "id": "PBLN_000000000120023",
